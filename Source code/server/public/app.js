@@ -908,6 +908,7 @@ function openPageView(n) {
 function closePageView() {
   viewPage = 0;
   $("pageView").hidden = true;
+  $("pvStage").innerHTML = "";
 }
 
 function renderPageView() {
