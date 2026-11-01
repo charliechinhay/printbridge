@@ -18,6 +18,8 @@ websites (`fake-web.js`) on spare ports, so nothing else needs to be running.
     node t13-upload-retry.js  "Print this?" screen: a stuck upload is sent again, then shows an error
     node t14-preview-files.js  the preview library is sent gzipped to browsers that can take it
 
+    node t15-page-view.js    closing the large page preview frees its image; reopening the same page works
+
 These run on Linux/macOS. The Windows-only parts (the Task Scheduler task,
 the installer) are covered by manual checks on Windows and Mac.
 t4, t5 and t6 need a real network card: on a machine with only
