@@ -235,18 +235,28 @@ function dispatch(job) {
   return true;
 }
 
-// Pick another printer which is online and supports the same options,
-// and which we have not tried yet.
-function findFallbackPrinter(job) {
+// Pick another printer which is online, is the same kind as this one (a
+// letter must never come out of a dot matrix printer), supports the same
+// options, and which we have not tried yet. None when we can't tell its kind.
+function otherPrinterLike(printer, options, triedIds) {
+  const kind = agents.kindOf(printer);
+  if (kind === "unknown") return null;
   return (
     db.printers.find(
       (p) =>
-        !job.triedPrinterIds.includes(p.id) &&
+        p.id !== printer.id &&
+        !triedIds.includes(p.id) &&
         !p.hidden &&
         agents.isOnline(p.agentId) &&
-        printerSupports(p, job.options)
+        agents.kindOf(p) === kind &&
+        printerSupports(p, options)
     ) || null
   );
+}
+
+function findFallbackPrinter(job) {
+  const current = agents.findPrinter(job.printerId);
+  return current ? otherPrinterLike(current, job.options, job.triedPrinterIds) : null;
 }
 
 function finish(job, status, message) {
@@ -360,19 +370,9 @@ function handleAgentOffline(agentId) {
     if (FINISHED.has(job.status)) continue;
     if (job.status === "queued") continue;
 
-    // Once it was already printing, it may well have come out: moving it
-    // to another printer would print it twice. It waits for its own
-    // computer instead, which reports how it went when it's back.
-    if (job.allowFailover && job.status !== "printing") {
-      const fallback = findFallbackPrinter(job);
-      if (fallback) {
-        job.printerId = fallback.id;
-        job.printerName = fallback.name;
-        setStatus(job, "retrying", "Computer went offline, trying " + fallback.name + ".");
-        dispatch(job);
-        continue;
-      }
-    }
+    // It never moves to another printer from here: the computer may already
+    // have the file, and would print it too once it's back - a copy on the
+    // wrong printer. It waits for its own computer, which reports how it went.
     setStatus(job, "queued", "That computer went offline. Waiting for it to return.");
   }
 }
@@ -493,6 +493,7 @@ module.exports = {
   createJob,
   dispatch,
   findFallbackPrinter,
+  otherPrinterLike,
   fileForToken,
   listActiveQueue,
   countInProgress,

@@ -98,6 +98,10 @@
 
         <section class="settings-pane">
           <div id="printerPick"></div>
+          <div class="checkline other-printer" id="failoverLine">
+            <input id="failover" type="checkbox">
+            <label for="failover" id="failoverLabel">If this printer is off or fails, print on another one of the same kind</label>
+          </div>
 
           <div class="layout-opts" id="layoutOpts">
             <div class="field">
@@ -122,14 +126,7 @@
             </div>
           </div>
 
-          <details class="options-fold" id="optionsFold">
-            <summary>More options</summary>
-            <div class="options-inner" id="options"></div>
-            <div class="checkline" style="margin-top:4px">
-              <input id="failover" type="checkbox" checked>
-              <label for="failover">If that printer is busy or off, use another one</label>
-            </div>
-          </details>
+          <div class="options-inner" id="options"></div>
         </section>
       </div>
 

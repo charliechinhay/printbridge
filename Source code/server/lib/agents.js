@@ -108,6 +108,21 @@ function setColorMode(record, mode) {
   return true;
 }
 
+// What kind of printer it is: what the Manage page says, else a guess from
+// its name. People mistake dot matrix printers for ordinary ones, so the
+// print page shows this, and failover only moves a job to the same kind.
+const TYPE_GUESSES = [
+  ["dotmatrix", /dot ?matrix|\b(LQ|LX|FX|DFX|PLQ)[-\s]?\d|\bML[-\s]?\d{3}|microline|tally|\bDP[-\s]?\d{3}\b/i],
+  ["thermal", /thermal|receipt|\bTM[-\s]?[TUMPH]?\d|\bPOS[-\s]?\d|\bXP[-\s]?\d{2,3}|zebra|\bZD\d|\bGK\d|rongta|\blabel\b/i],
+  ["inkjet", /ink ?jet|deskjet|officejet|\benvy\b|smart ?tank|ink ?tank|ecotank|pixma|stylus|workforce|\bL\d{3,4}\b|\bET[-\s]?\d{4}|\bG\d{4}\b|\bM[GP]\d{3,4}|\bTS\d{4}|\bDCP-T|\bMFC-J/i],
+  ["laser", /laser|\bLBP|imageclass|i-sensys|\bHL-|\bMFC-L|\bDCP-L|xpress|\bSL-|ecosys|\bFS-\d|bizhub|imagerunner|phaser|versalink|workcentre|\bKX-MB|\bCLX|\bM\d{3,4}[a-z]{0,4}\b|\bP\d{4}/i],
+];
+function kindOf(record) {
+  if (PRINTER_TYPES.has(record.printerType) && record.printerType !== "auto") return record.printerType;
+  const found = TYPE_GUESSES.find(([, pattern]) => pattern.test(record.name || ""));
+  return found ? found[0] : "unknown";
+}
+
 function setPrinterType(record, type) {
   if (!PRINTER_TYPES.has(type)) return false;
   record.printerType = type;
@@ -130,6 +145,7 @@ function listPrinters() {
         agentId: p.agentId,
         online: isOnline(p.agentId),
         printerType: PRINTER_TYPES.has(p.printerType) ? p.printerType : "auto",
+        kind: kindOf(p),
         capabilities: p.capabilities,
       };
     })
@@ -313,6 +329,7 @@ module.exports = {
   canPrintTo,
   setColorMode,
   setPrinterType,
+  kindOf,
   findAgentByToken,
   printerId,
 };

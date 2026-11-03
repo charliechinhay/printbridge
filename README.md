@@ -85,6 +85,8 @@ node t11-fixip.js
 node t12-remote.js
 node t13-upload-retry.js
 node t14-preview-files.js
+node t15-page-view.js
+node t16-other-printer.js
 ```
 
 ---

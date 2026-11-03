@@ -378,7 +378,7 @@ async function showPrintModal(message) {
   activeIndex = 0;
   $("printMessage").className = "modal-message" + (message ? " warn" : "");
   $("printMessage").textContent = message || "";
-  $("optionsFold").open = false;
+  $("failover").checked = false;
   if (!printers.length) {
     try { await loadPrinters(true); } catch (err) { /* shown below as "no printers" */ }
   }
@@ -894,7 +894,7 @@ function updatePrintButton() {
   const ready = pendingFiles.filter((e) => e.status === "ready");
   const waiting = pendingFiles.some((e) => e.status === "uploading" || e.status === "preparing");
   button.disabled = !selectedPrinter() || waiting || !ready.length;
-  button.textContent = waiting ? "Getting it ready..." : ready.length > 1 ? "Print " + ready.length + " files" : "Print";
+  button.textContent = !selectedPrinter() && printers.length > 1 ? "Choose a printer first" : waiting ? "Getting it ready..." : ready.length > 1 ? "Print " + ready.length + " files" : "Print";
 }
 
 // --- one page, large -----------------------------------------------------------
@@ -974,8 +974,9 @@ function renderPrinterPick() {
   const box = $("printerPick");
   box.innerHTML = "";
 
-  const usable = printers.filter((p) => p.online);
-  const list = usable.length ? usable : printers;
+  // Every printer, off ones too: a printer that goes off for a moment must
+  // not drop out of the list and leave the job pointed at a different one.
+  const list = printers;
 
   if (!list.length) {
     box.innerHTML =
@@ -983,44 +984,43 @@ function renderPrinterPick() {
       "Run <strong>PrintBridge Setup</strong> on the computer the printer is plugged into " +
       "and choose &ldquo;This computer shares a printer&rdquo;. Its printers then appear here by themselves.</div>";
     chosenPrinterId = null;
+    renderFailoverLine();
     updatePrintButton();
     return;
   }
 
-  // Keep the previous choice if it's still there, else use the first one.
+  // Keep the choice while that printer exists. Never swap in another one
+  // by ourselves: with more than one, the person chooses.
   if (!chosenPrinterId || !list.some((p) => p.id === chosenPrinterId)) {
-    chosenPrinterId = list[0].id;
-  }
-
-  // One printer: don't make them choose. Just say where it's going.
-  if (list.length === 1) {
-    const only = list[0];
-    const div = document.createElement("div");
-    div.className = "going-to";
-    div.innerHTML =
-      "Going to <strong>" + escapeHtml(only.name) + "</strong>" + colorNote(only) +
-      (only.online ? "" : ' <span class="offline-note">(it\'s off right now &mdash; this will wait)</span>');
-    box.appendChild(div);
-    updatePrintButton();
-    return;
+    chosenPrinterId = list.length === 1 ? list[0].id : null;
   }
 
   const label = document.createElement("label");
-  label.textContent = "Which printer?";
+  label.textContent = list.length === 1 ? "Printing on" : chosenPrinterId ? "Which printer?" : "Which printer? Tap one";
   box.appendChild(label);
 
   const pick = document.createElement("div");
   pick.className = "printer-pick";
 
   for (const printer of list) {
+    const kind = KINDS[printer.kind] || KINDS.unknown;
+    const brand = brandOf(printer.name);
+    const color = printer.capabilities && printer.capabilities.color;
     const option = document.createElement("button");
     option.type = "button";
-    option.className = "printer-option" + (printer.id === chosenPrinterId ? " selected" : "");
+    option.className = "printer-option kind-" + (KINDS[printer.kind] ? printer.kind : "unknown") +
+      (printer.id === chosenPrinterId ? " selected" : "") + (printer.online ? "" : " is-off");
+    option.setAttribute("aria-pressed", printer.id === chosenPrinterId ? "true" : "false");
     option.innerHTML =
-      '<span class="dot ' + (printer.online ? "on" : "off") + '"></span>' +
+      '<span class="ptype" aria-hidden="true">' + kind.icon + "</span>" +
       '<span class="grow"><span class="pname">' + escapeHtml(printer.name) + "</span>" +
-      '<br><span class="pmeta">' + escapeHtml(printer.computerName) + colorNote(printer) +
-      (printer.online ? "" : " &mdash; off right now") + "</span></span>";
+      '<span class="chips">' +
+      (brand ? '<span class="chip brand" style="--brand:' + brand.color + '">' + brand.name + "</span>" : "") +
+      '<span class="chip kind">' + kind.name + "</span>" +
+      (color === true ? '<span class="chip colour">Colour</span>' : color === false ? '<span class="chip mono">Black &amp; white</span>' : "") +
+      "</span>" +
+      '<span class="pmeta"><span class="dot ' + (printer.online ? "on" : "off") + '"></span>' +
+      escapeHtml(printer.computerName) + (printer.online ? "" : " &mdash; off right now, it will wait") + "</span></span>";
     option.onclick = () => {
       chosenPrinterId = printer.id;
       renderPrinterPick();
@@ -1031,30 +1031,57 @@ function renderPrinterPick() {
   }
 
   box.appendChild(pick);
+  renderFailoverLine();
   updatePrintButton();
 }
 
-// " · Laser · Colour" etc. after the computer's name, when known.
-const TYPE_NAMES = {
-  inkjet: "Inkjet",
-  laser: "Laser",
-  dotmatrix: "Dot matrix",
-  thermal: "Thermal / Receipt",
-};
-
-function printerMetaNotes(printer) {
-  let note = "";
-  if (printer.printerType && TYPE_NAMES[printer.printerType]) {
-    note += " &middot; " + TYPE_NAMES[printer.printerType];
-  }
-  const color = printer.capabilities && printer.capabilities.color;
-  if (color === true) note += " &middot; Colour";
-  else if (color === false) note += " &middot; Black &amp; white";
-  return note;
+// "Print on another one if this is off" - only offered when there is
+// another printer of the same kind, since the server only moves it to one.
+function renderFailoverLine() {
+  const printer = selectedPrinter();
+  const others = printer && printer.kind !== "unknown"
+    ? printers.filter((p) => p.id !== printer.id && p.kind === printer.kind)
+    : [];
+  $("failoverLine").hidden = !others.length;
+  if (!others.length) $("failover").checked = false;
+  else $("failoverLabel").textContent =
+    "If this printer is off or fails, print on another " + KINDS[printer.kind].name.toLowerCase() + " printer instead";
 }
 
-function colorNote(printer) {
-  return printerMetaNotes(printer);
+const PRINTER_ICON_BODY = '<path d="M7 9V3h10v6"/><rect x="3" y="9" width="18" height="8" rx="2"/>';
+const KINDS = {
+  laser: { name: "Laser", icon: svgIcon(PRINTER_ICON_BODY + '<path d="M7 14h10v7H7z"/><path d="M6.5 12h2"/>') },
+  inkjet: { name: "Inkjet", icon: svgIcon(PRINTER_ICON_BODY + '<path d="M7 14h6v7H7z"/><path d="M18 13.5c1.2 1.6 2 2.7 2 3.7a2 2 0 0 1-4 0c0-1 .8-2.1 2-3.7z" fill="currentColor"/>') },
+  dotmatrix: { name: "Dot matrix", icon: svgIcon('<rect x="2" y="8" width="20" height="8" rx="2"/><path d="M6 8V3h12v5"/><path d="M6 13h12v9H6z"/><path d="M4 18h.01M4 21h.01M20 18h.01M20 21h.01M9 16h.01M12 16h.01M15 16h.01" stroke-width="2.4"/>') },
+  thermal: { name: "Receipt", icon: svgIcon('<path d="M6 2h12v20l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5L6 22z"/><path d="M9 7h6M9 11h6M9 15h4"/>') },
+  unknown: { name: "Printer", icon: svgIcon(PRINTER_ICON_BODY + '<path d="M7 14h10v7H7z"/>') },
+};
+function svgIcon(inner) {
+  return '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' + inner + "</svg>";
+}
+
+// The maker, from the printer's name, with a colour of its own.
+const BRANDS = [
+  [/\b(hp|hewlett|laserjet|deskjet|officejet)/i, "HP", "#0b74c4"],
+  [/epson|\b(LQ|LX|FX|DFX|TM)[-\s]?\d/i, "Epson", "#1c2f8c"],
+  [/canon|pixma|\bLBP/i, "Canon", "#c8102e"],
+  [/brother/i, "Brother", "#5b3fa6"],
+  [/samsung/i, "Samsung", "#1f4e9c"],
+  [/xerox/i, "Xerox", "#d4351c"],
+  [/ricoh/i, "Ricoh", "#a3123a"],
+  [/kyocera|ecosys/i, "Kyocera", "#7a1f5c"],
+  [/konica|bizhub/i, "Konica Minolta", "#00539b"],
+  [/lexmark/i, "Lexmark", "#2c8a3e"],
+  [/\boki|okidata|microline/i, "OKI", "#b0480f"],
+  [/pantum/i, "Pantum", "#2b6f6a"],
+  [/panasonic/i, "Panasonic", "#1d3f8f"],
+  [/sharp/i, "Sharp", "#9c1f2a"],
+  [/tally/i, "Tally", "#6b5a17"],
+  [/zebra/i, "Zebra", "#333333"],
+];
+function brandOf(name) {
+  const found = BRANDS.find(([pattern]) => pattern.test(name || ""));
+  return found ? { name: found[1], color: found[2] } : null;
 }
 
 function selectedPrinter() {
@@ -1195,7 +1222,7 @@ async function submitPrint() {
           uploadId: entry.uploadId,
           printerId: printer.id,
           options: Object.assign({}, common, { pageRanges: rangesText(entry.chosen) }),
-          allowFailover: $("failover").checked ? "true" : "false",
+          tryOtherPrinter: $("failover").checked ? "true" : "false",
           label,
         }),
       });

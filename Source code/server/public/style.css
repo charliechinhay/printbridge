@@ -327,7 +327,33 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent-soft
 .printer-option.selected { border-color: var(--accent); background: var(--accent-soft); }
 .printer-option .pname { font-weight: 600; }
 .printer-option .pmeta { font-size: 13px; color: var(--muted); }
-.printer-option .grow { flex: 1; }
+.printer-option .grow { flex: 1; min-width: 0; }
+.printer-option .pname { display: block; overflow-wrap: anywhere; }
+.printer-option .pmeta { display: block; margin-top: 4px; }
+.printer-option.is-off { opacity: .72; }
+/* Each kind has its own colour, so a dot matrix can't pass for an ordinary printer. */
+.printer-option { --kind: #64748b; border-left: 6px solid var(--kind); }
+.printer-option.kind-laser { --kind: #2563eb; }
+.printer-option.kind-inkjet { --kind: #0d9488; }
+.printer-option.kind-dotmatrix { --kind: #d97706; }
+.printer-option.kind-thermal { --kind: #78716c; }
+.printer-option.selected { border-left-color: var(--kind); box-shadow: 0 0 0 1.5px var(--accent); }
+.ptype {
+  flex: none; display: grid; place-items: center; width: 44px; height: 44px;
+  border-radius: 10px; background: var(--kind); color: #fff;
+}
+.chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
+.chip { font-size: 12px; font-weight: 600; line-height: 1; padding: 4px 7px; border-radius: 6px; }
+.chip.brand { background: var(--brand); color: #fff; }
+.chip.kind { color: var(--kind); border: 1.5px solid var(--kind); padding: 2.5px 6px; }
+.printer-option.kind-dotmatrix .chip.kind { background: var(--kind); color: #fff; }
+.chip.colour { color: #fff; background: linear-gradient(90deg, #0891b2, #c026d3 50%, #ca8a04); }
+.chip.mono { color: #fff; background: #27272a; }
+.other-printer {
+  margin-top: 12px; padding: 11px 12px; border-radius: 10px;
+  background: var(--accent-soft); font-weight: 500;
+}
+.other-printer[hidden] { display: none; }
 
 .going-to {
   background: var(--accent-soft);
@@ -446,16 +472,7 @@ tr.mine { background: var(--accent-soft); }
 .modal-message.error { color: var(--bad); }
 .modal-message.ok { color: var(--ok); }
 
-/* more options fold */
-details.options-fold { margin-top: 14px; }
-details.options-fold summary {
-  cursor: pointer; font-size: 14px; color: var(--accent-text);
-  list-style: none; padding: 6px 0; font-weight: 500;
-}
-details.options-fold summary::-webkit-details-marker { display: none; }
-details.options-fold summary::before { content: "\25B8 "; display: inline-block; transition: transform .15s; }
-details.options-fold[open] summary::before { transform: rotate(90deg); }
-.options-inner { padding-top: 10px; }
+.options-inner { padding-top: 14px; }
 
 .modal-message.warn { color: var(--warn); }
 
