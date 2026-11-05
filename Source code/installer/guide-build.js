@@ -130,7 +130,7 @@ c.push(
   new Paragraph({ spacing: { before: 900, after: 360 }, children: [new ImageRun({ type: "png", data: fs.readFileSync(path.join(IMG, "printbridge-badge.png")), transformation: { width: 190, height: 61 }, altText: { title: "PrintBridge", description: "PrintBridge", name: "printbridge-badge" } })] }),
   new Paragraph({ spacing: { before: 0, after: 120 }, children: [new TextRun({ text: "PrintBridge", bold: true, size: 64, color: INK })] }),
   new Paragraph({ spacing: { after: 120 }, children: [new TextRun({ text: "Setup guide", size: 40, color: GREY })] }),
-  new Paragraph({ spacing: { after: 120 }, children: [new TextRun({ text: "One installer for every computer  ·  version 4.1", size: 22, color: GREY })] }),
+  new Paragraph({ spacing: { after: 120 }, children: [new TextRun({ text: "One installer for every computer  ·  version 4.2", size: 22, color: GREY })] }),
   new Paragraph({ spacing: { after: 600 }, children: [new TextRun({ text: "\u2615 by @devnithdev", size: 22, color: GREEN, bold: true })] }),
   ...box("The whole setup, in three steps (and one optional fourth)", [
     "**1.**  On the **main computer** (the one that stays on all day), double-click **PrintBridgeSetup.exe** and choose **This is the main computer**.",
@@ -140,6 +140,7 @@ c.push(
     "That's all. Anyone on the office network prints from their own phone or computer by opening the address on the sign, and on the computers from step 3 and 4, from any program by choosing the **PrintBridge** printer. No app, no account, no password.",
   ]),
   P("**Already using the older version** (the folder of files with PrintAgent.exe and .bat files)? Use this same file. Setup finds the old version, keeps your list of printers, and switches the old one off. Do the main computer first (see Step 3 of \"Setting up the main computer\")."),
+  P("**Prefer to watch?** A 3-minute video shows all of it, from installing to printing from a phone and from Excel: **https://youtu.be/Cx2plyjPf7w**. The printing page has a **Watch the full guide** button too."),
   H2("What's in this guide"),
   bullet("Before you start"),
   bullet("Setting up the main computer"),
@@ -277,8 +278,8 @@ c.push(
   numbered("program")("Print the way you always do (**Ctrl+P**, or **File > Print**), and choose the printer **PrintBridge**."),
   numbered("program")("Set things up in the program's own Print window as usual. It all works: **Print Selection** in Excel (select the cells first), **Landscape**, **Fit Sheet on One Page**, margins, and the program's own preview."),
   numbered("program")("Click **Print**. The printing page opens in the web browser, showing the printout:"),
-  ...picture("preview", 430, "The printing page after printing from Excel. Here only pages 1 and 2 are ticked."),
-  numbered("program")("Check the pages, choose which **office printer**, and press **Print**. Collect it from that printer."),
+  ...picture("preview", 430, "The printing page after printing part of an Excel sheet. Tap the printer to use, then Print."),
+  numbered("program")("Check the pages, tap the **office printer** to use, and press **Print**. Collect it from that printer."),
   P("Nothing is printed until **Print** is pressed on the printing page. Closing it throws the printout away."),
   H2("From a phone, tablet or any computer"),
   P("Anyone on the office network, with nothing installed:"),
@@ -286,14 +287,16 @@ c.push(
   numbered("print")("Open the address on the **wall sign** in a web browser, or **scan the code** on the sign with the phone's camera."),
   numbered("print")("The first time, type your **name** (so you can find your pages at the printer)."),
   numbered("print")("**Drop a file** on the page, or tap to choose one. A **preview** shows every page."),
-  numbered("print")("Choose the printer and press **Print**."),
+  numbered("print")("Tap a printer and press **Print**. Each printer shows its maker, its kind (inkjet, laser, dot matrix or receipt), colour or black & white, and the computer it's on."),
   P("PDFs, photos, and (with LibreOffice) Word, Excel and PowerPoint files all work. The page shows everyone's queue, and tells you if something didn't print and why."),
   H2("Choosing pages and layout"),
   P("The same choices appear however the file arrived:"),
   bullet("**Pages**: tick pages in the preview to print only those, or type them, like `1-3` or `2,5`. Tap a page to see it bigger."),
   bullet("**Orientation**: **Automatic** turns each page to suit the paper. Choose **Portrait** or **Landscape** to force one."),
   bullet("**Size on paper**: **Fit to page** makes each page fill the paper; **Actual size** prints it at its real size (a page bigger than the paper is cut off)."),
-  bullet("**More options**: copies, paper size, colour and double-sided, when the printer can do them."),
+  bullet("**Copies**, and **paper size**, **colour** and **double-sided** when the printer can do them, are shown with the other choices."),
+  bullet("**Print on another printer** (off unless you tick it): if your printer is off or fails, the job moves to another printer of the same kind. Tick the second, smaller box to let an inkjet and a laser printer stand in for each other. Dot matrix and receipt printers only ever use their own kind. Without a tick, a print only ever goes to the printer you chose."),
+  bullet("**Language**: choose it at the top of the page. Sinhala and Tamil are first; **More languages...** lists the rest. Each phone or computer remembers its choice."),
   P("The preview shows each page on a sheet of the chosen paper, so what you see is how it prints."),
   ...box("Keep in mind", [
     "Anyone connected to the office network can print, and can change the printer list on the printing page. That's right for a private office network. Don't use it on a shared or public network, such as a building's guest Wi-Fi.",
@@ -310,6 +313,7 @@ c.push(
     ["**PrintBridge**", "Opens the printing page."],
     ["**Check PrintBridge**", "Shows whether everything on this computer is working, in plain words, and what to do if not."],
     ["**Restart PrintBridge**", "Stops and starts it again. Try this first if something seems stuck."],
+    ["**Update PrintBridge now**", "Looks for a new version straight away (it also does this by itself every hour)."],
     ["**Read me**", "A short summary of this guide."],
   ]),
   H2("Checking"),
@@ -322,7 +326,7 @@ c.push(
     ["Rename a computer", "Run Setup again on it and type the new name."],
     ["Hide a printer from the list", "On the printing page, open **Printers & setup** and hide it."],
     ["Make a different computer the main one", "1. Run Setup on the new computer and choose **This is the main computer**.  2. Run Setup on the old main computer and choose **This computer shares a printer**.  3. Run Setup again on each printer computer: it connects to the new main computer by itself.  4. Print the new wall sign."],
-    ["Update to a newer version later", "Run the newer **PrintBridgeSetup.exe** on every computer, main computer first. Everything is kept."],
+    ["Update to a newer version", "Nothing to do: every computer checks for a new version every hour and installs it by itself when nothing is printing. Everything is kept. To check straight away, choose **Update PrintBridge now** in the Start menu."],
   ], 3400),
 );
 
@@ -403,7 +407,8 @@ c.push(
   bullet("The program isn't signed with a code-signing certificate, which is why Windows SmartScreen shows a warning the first time. Some antivirus products may also be cautious about it."),
   bullet("There are no accounts: anyone on the network can print and manage printers. Keep it on a private office network, never on the internet."),
   bullet("Nothing is printed or stored anywhere outside the office. Uploaded files are deleted after printing."),
-  bullet("Update every computer to the same version. A computer left on an older version still prints, but may ignore newer orientation and size choices."),
+  bullet("Every computer on 4.1.3 or newer updates itself (it checks every hour and waits until nothing is printing), and only installs versions signed with PrintBridge's update key. **Check PrintBridge** and the **Printers & setup** page show each computer's version."),
+  bullet("On **Printers & setup**, check each printer's **Type** and **Colour**. They show on the printer cards and decide which printers can stand in for each other: a laser printer set as inkjet won't stand in for a laser."),
 );
 
 // ====================================================================

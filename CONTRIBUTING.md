@@ -34,6 +34,8 @@ Then open <http://localhost:3000>. `NO_DISCOVERY=1` stops it from looking for ot
 
 There's nothing to compile: reload the page after changing anything in `server/public/`, and restart after changing `server.js` or `server/lib/`.
 
+`server/public/lang.js` (the language picker) is also used by the download page, so a change to it is copied to the `printbridge-updates` repository when a release is made.
+
 To try the page on a phone, connect the phone to the same Wi-Fi and open `http://YOUR-COMPUTER'S-ADDRESS:3000`. Browsers can slow a page down to phone speed in their developer tools, which is worth doing for anything on the "Print this?" screen, because many people use it on old phones.
 
 ## Run the tests

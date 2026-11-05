@@ -45,7 +45,14 @@ From a phone, tablet or any computer:
 2. Open the address on the wall sign (or scan its code with a phone
    camera). It looks like  http://192.168.1.20:3000
 3. Drop in a file. The preview shows every page: tick pages to print
-   only those, choose portrait or landscape and the printer, press Print.
+   only those, choose portrait or landscape, tap a printer (each shows
+   its maker, kind and colour), press Print.
+
+A print goes only to the printer you chose. Tick "Print on another
+printer" to let it move to another printer of the same kind if yours is
+off or fails (a second, smaller tick lets inkjet and laser stand in for
+each other). Choose a language (Sinhala, Tamil and more) at the top of
+the page. A 3-minute video guide: https://youtu.be/Cx2plyjPf7w
 
 To print the wall sign, open the printing page on the main computer and
 go to  http://localhost:3000/poster.html
@@ -111,8 +118,8 @@ ADDING, CHANGING OR REMOVING
   the network stops working with it. Unticking it on a later Setup run,
   or uninstalling, makes the address automatic again. Reserving the
   address in the router as well rules out another device ever getting it.
-- Updates install by themselves (from version 4.1.3 on). Every few
-  hours each computer looks for a new version; when there is one, it
+- Updates install by themselves (from version 4.1.3 on). Every hour
+  each computer looks for a new version; when there is one, it
   downloads it, waits until nothing is printing, installs it with no
   questions (every setting stays as it is) and checks that it starts -
   if it doesn't, the previous version is put back. To look straight

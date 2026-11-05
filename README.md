@@ -18,11 +18,11 @@ One main computer runs the printing page, computers with printers share them, an
 
 ## Screenshots
 
-| **Print from any phone or browser** | **Preview pages & pick a printer** |
+| **Print from any phone or browser** | **Pick a printer: maker, kind, colour** |
 | :---: | :---: |
-| <img src="Source%20code/installer/proposal-img/f-home.png" alt="PrintBridge home screen" width="360"> | <img src="Source%20code/installer/guide-img/preview.png" alt="Print preview and page selection" width="420"> |
+| <img src="Source%20code/installer/guide-img/screen-home.png" alt="PrintBridge home screen" width="300"> | <img src="Source%20code/installer/guide-img/screen-printers.png" alt="Printer cards showing maker, kind and colour" width="300"> |
 | **Live print queue** | **Printable wall QR sign** |
-| <img src="Source%20code/installer/proposal-img/f-queue.png" alt="Live print queue" width="360"> | <img src="Source%20code/installer/proposal-img/f-poster.png" alt="Wall QR sign for phones" width="360"> |
+| <img src="Source%20code/installer/guide-img/screen-queue.png" alt="Live print queue" width="300"> | <img src="Source%20code/installer/proposal-img/f-poster.png" alt="Wall QR sign for phones" width="360"> |
 | **Simple role-based setup** | **Built-in status check** |
 | <img src="Source%20code/installer/guide-img/role-main.png" alt="Setup installer role picker" width="420"> | <img src="Source%20code/installer/guide-img/check.png" alt="Check PrintBridge status page" width="420"> |
 
@@ -34,8 +34,11 @@ One main computer runs the printing page, computers with printers share them, an
 * **Google Cloud Print alternative**: Keeps all printing local to your office Wi-Fi network. No cloud subscriptions, external accounts, or documents leaving your building.
 * **Cross-platform**: Seamlessly connects Windows 10/11 and macOS (Apple Silicon & Intel) machines across the local network.
 * **Print from desktop apps**: Includes a native **PrintBridge** virtual printer so you can print directly from Microsoft Office, Acrobat, or any software.
-* **Smart print preview & queue**: Page-by-page visual preview, printer type selection (inkjet, laser, dot matrix, thermal/receipt), live queue tracking, and automatic failover if a printer is busy.
-* **Self-healing**: Resumes automatically after power cuts, automatically rediscovers network addresses, and verifies signed updates in the background.
+* **Smart print preview & queue**: Page-by-page visual preview, printer cards that show the maker, kind (inkjet, laser, dot matrix, receipt) and colour or black & white, and live queue tracking. A print goes only to the printer you chose.
+* **Optional back-up printer**: Tick it and, if your printer is off or fails, the job moves to a printer of the same kind. Inkjet and laser stand in for each other only with a second tick; dot matrix and receipt printers only use their own kind. Off by default.
+* **Your language**: A language picker on the printing page, with Sinhala and Tamil first and every other Google Translate language after them.
+* **A 3-minute video guide**: [Watch it on YouTube](https://youtu.be/Cx2plyjPf7w): installing on Windows and Mac, printing from a phone, from the page and from Excel.
+* **Self-healing**: Resumes automatically after power cuts, automatically rediscovers network addresses, and checks for signed updates every hour, installing them only when nothing is printing.
 
 ---
 
@@ -63,7 +66,7 @@ Install the **main computer** first, then the **computers with printers**, then 
 | `Source code/installer-mac` | macOS `.pkg` and `.dmg` installer scripts |
 | `Source code/relay` | Optional Cloudflare Worker drop page for remote printing ("Printing from anywhere") |
 | `Source code/release/publish-update.js` | Key generation, version bumping, release signing, and publishing |
-| `Source code/tests` | Automated test suites (`t1-durable.js` through `t12-remote.js`) |
+| `Source code/tests` | Automated test suites (`t1-durable.js` through `t16-other-printer.js`) |
 | `BUILD-ALL.command` | Builds both the Windows and Mac installers from start to finish on a Mac |
 | `PUBLISH-UPDATE.command` | Signs the release manifest and publishes an automatic update |
 
@@ -95,11 +98,11 @@ node t16-other-printer.js
 
 1. **Bump the version number** (updates all package, server, agent, and installer files):
    ```bash
-   cd "Source code/release" && node publish-update.js bump 4.2.3
+   cd "Source code/release" && node publish-update.js bump X.Y.Z
    ```
 2. **Build**:
    * **On a Mac**: run `./BUILD-ALL.command` (requires Node.js, `makensis` via Homebrew, Xcode Command Line Tools, and Rosetta on Apple Silicon).
-   * **On GitHub Actions**: push a version tag (`git tag v4.2.3 && git push --tags`) or trigger **Actions → Build installers → Run workflow**, then download the installers from the run's Artifacts.
+   * **On GitHub Actions**: push a version tag (`git tag vX.Y.Z && git push --tags`) or trigger **Actions → Build installers → Run workflow**, then download the installers from the run's Artifacts.
 3. **Publish an update**:
    * Run `./PUBLISH-UPDATE.command`. It signs `latest.json` with your private update key (`*.pem` is gitignored and never stored in the repository) and uploads the release to both `printbridge` and `printbridge-updates`. Installed computers verify the signature and SHA-256 fingerprint before installing.
 

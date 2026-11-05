@@ -175,7 +175,7 @@ c.push(
   table([q, q, q, q], [new TableRow({ children: [
     figCell("f-name.png", "Figure 1. First visit only: a name, no account.", q),
     figCell("f-home.png", "Figure 2. The print page.", q),
-    figCell("f-confirm.png", "Figure 3. A preview of every page, then Print.", q),
+    figCell("f-confirm.png", "Figure 3. Tap a printer (maker, kind, colour), then Print.", q),
     figCell("f-queue.png", "Figure 4. Sent. The queue shows it.", q),
   ] })]),
   new Paragraph({ keepNext: true, spacing: { before: 200, after: 60 }, children: [new TextRun({ text: "What happens behind the scenes", bold: true, size: 21 })] }),
@@ -251,7 +251,7 @@ c.push(
     return table([w, w, w, w], [new TableRow({ children: tiles.slice(0, 4).map(mk) }), new TableRow({ children: tiles.slice(4).map(mk) })]);
   })(),
   gap(40),
-  small("Copies, paper size, colour, double-sided and page range are available under **More options**, showing only what each printer can do."),
+  small("Copies, paper size, colour, double-sided and page range sit with the other choices, showing only what each printer can do. A print goes only to the printer chosen, unless the person ticks **Print on another printer**. The page is also available in Sinhala, Tamil and more, and a 3-minute video guide shows the whole thing: youtu.be/Cx2plyjPf7w."),
   pageBreak(),
 );
 
