@@ -290,6 +290,11 @@ function gitCredentialToken() {
   return "";
 }
 
+// Is the GitHub "gh" tool installed and signed in?
+function haveGh() {
+  try { return spawnSync("gh", ["auth", "status"], { encoding: "utf8", timeout: 10000 }).status === 0; } catch (err) { return false; }
+}
+
 function sourceRepo() {
   try {
     const r = spawnSync("git", ["-C", SRC, "remote", "get-url", "origin"], { encoding: "utf8", timeout: 5000 });

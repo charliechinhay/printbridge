@@ -83,6 +83,11 @@ agents.events.emit("agent-offline", "a1");
 ok(j5.printerId === "ink1" && j5.status === "queued", "computer goes off after sending -> waits, even with 'a laser instead'");
 online.add("a1");
 
+byId("laser2").printerType = "inkjet";
+const managed = agents.listPrintersForManaging().find((p) => p.id === "laser2");
+ok(managed.printerType === "inkjet" && managed.kind === "laser", "Manage page learns what Automatic would guess, so a laser set as inkjet is flagged");
+delete byId("laser2").printerType;
+
 const server = fs.readFileSync(S + "/server.js", "utf8");
 ok(/tryOther === "other"/.test(server) && /tryOther === "true" \|\| tryOther === "same"/.test(server), "page values: same (or 4.2.6's true) and other are understood");
 ok(!/req\.body\.allowFailover/.test(server) && /req\.body\.tryOtherPrinter/.test(server), "old pages' allowFailover (ticked by default) is ignored");

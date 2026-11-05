@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/style.css">
   <script src="/theme.js"></script>
 </head>
-<body>
+<body class="manage-page">
   <header>
     <span class="brand-mark" aria-label="PrintBridge">PRINTBRIDGE</span>
     <h1>Printers &amp; setup</h1>
@@ -39,12 +39,12 @@
 
     <div class="card">
       <h2>Printers</h2>
-      <table id="printerTable">
+      <div class="table-scroll"><table id="printerTable">
         <thead>
           <tr><th>Printer</th><th>On which computer</th><th>Type</th><th>Colour or black &amp; white?</th><th>Shown to people?</th></tr>
         </thead>
         <tbody></tbody>
-      </table>
+      </table></div>
       <div class="hint" id="printerHint">No printers yet.</div>
       <p class="hint" style="margin-top:6px">
         Type and colour show on each printer&rsquo;s card on the printing page.
@@ -56,12 +56,12 @@
 
     <div class="card">
       <h2>Computers with printers</h2>
-      <table id="computerTable">
+      <div class="table-scroll"><table id="computerTable">
         <thead>
           <tr><th>Name</th><th>System</th><th>Version</th><th>Status</th><th></th></tr>
         </thead>
         <tbody></tbody>
-      </table>
+      </table></div>
       <div class="hint" id="computerHint">None connected yet.</div>
     </div>
 
@@ -81,7 +81,7 @@
       <div id="rmLocked" hidden>
         <div class="going-to" style="margin-bottom:10px">&#128274; Remote printing settings are locked. Type the lock code to see or change the people, their limits and the drop page.</div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-          <input type="password" id="rmUnlockCode" placeholder="Lock code" spellcheck="false" autocomplete="off" style="flex:1;min-width:180px;max-width:280px">
+          <input type="password" id="rmUnlockCode" aria-label="Lock code" placeholder="Lock code" spellcheck="false" autocomplete="off" style="flex:1;min-width:180px;max-width:280px">
           <button type="button" id="rmUnlock">Unlock</button>
         </div>
       </div>
@@ -117,27 +117,27 @@
         <div id="rmNewCode" class="page-message" hidden style="margin-top:12px"></div>
 
         <h3 style="font-size:15px;margin:22px 0 8px">People with a code</h3>
-        <table id="rmPeople">
+        <div class="table-scroll"><table id="rmPeople">
           <thead><tr><th>Name</th><th>Code</th><th>Printers</th><th>A day</th><th>Approval</th><th>Status</th><th></th></tr></thead>
           <tbody></tbody>
-        </table>
+        </table></div>
         <div class="hint" id="rmPeopleHint">Nobody yet.</div>
       </div>
 
       <div id="rmPendingBox" hidden>
         <h3 style="font-size:15px;margin:22px 0 8px">Waiting for approval</h3>
-        <table id="rmPending">
+        <div class="table-scroll"><table id="rmPending">
           <thead><tr><th>From</th><th>File</th><th>Printer</th><th>Copies</th><th></th></tr></thead>
           <tbody></tbody>
-        </table>
+        </table></div>
       </div>
 
       <div id="rmLogBox" hidden>
         <h3 style="font-size:15px;margin:22px 0 8px">Recent remote printouts</h3>
-        <table id="rmLog">
+        <div class="table-scroll"><table id="rmLog">
           <thead><tr><th>When</th><th>From</th><th>File</th><th>Printer</th><th>Result</th></tr></thead>
           <tbody></tbody>
-        </table>
+        </table></div>
         <p class="hint"><button type="button" class="ghost" id="rmDisconnect" style="padding:0;font-size:13px">Disconnect the drop page</button></p>
       </div>
     </div>

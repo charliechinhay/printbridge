@@ -238,14 +238,6 @@ ${rows.map(([k, v]) => `<li><b>${esc(k)}</b>${v}</li>`).join("\n")}
 </form>`);
 }
 
-function donePage(lines) {
-  return layout("All set", `
-<ul class="summary">
-${lines.map((l) => `<li>${esc(l)}</li>`).join("\n")}
-</ul>
-<p class="hint">You can close this tab. ${esc(B.NAME)} is now starting.</p>`);
-}
-
 function readBody(req) {
   return new Promise((resolve, reject) => {
     const chunks = [];

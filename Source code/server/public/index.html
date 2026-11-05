@@ -24,7 +24,7 @@
       <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
       <span class="refresh-text">Refresh address</span>
     </button>
-    <button class="help-btn" id="helpBtn" type="button">Need help?</button>
+    <button class="help-btn" id="helpBtn" type="button"><span class="help-long">Need help?</span><span class="help-short">Help</span></button>
   </header>
 
   <main>
@@ -82,7 +82,7 @@
       <div class="welcome-body">
         <h2>What should we call you?</h2>
         <p>So people can tell whose printout is whose at the tray. No account, no password &mdash; just a name on the job.</p>
-        <input id="welcomeName" type="text" placeholder="e.g. Dev, or Front desk iPad" maxlength="40" autocomplete="off">
+        <input id="welcomeName" type="text" aria-label="Your name" placeholder="e.g. Dev, or Front desk iPad" maxlength="40" autocomplete="off">
         <div style="margin-top:16px">
           <button class="big-print" id="welcomeSave" type="button">Start printing</button>
         </div>

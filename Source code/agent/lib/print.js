@@ -6,7 +6,6 @@
 //                   printer name on the command line.
 
 const fs = require("fs");
-const os = require("os");
 const path = require("path");
 const { run, IS_WINDOWS } = require("./printers");
 

@@ -254,7 +254,16 @@ button.hide-btn:hover { background: var(--warn-line); }
 .show-state.is-hidden { color: var(--muted); }
 .show-state::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: currentColor; vertical-align: 1px; }
 .color-seg button { padding: 6px 8px; font-size: 13px; white-space: nowrap; }
+/* Printers & setup has wide tables: give it room on bigger screens. */
+.manage-page main { max-width: 1040px; }
+/* Wide tables scroll sideways inside their card instead of running past it. */
+.table-scroll { overflow-x: auto; }
+#printerTable td:first-child { min-width: 9em; }
+.type-warn { display: block; margin-top: 4px; font-size: 12px; color: var(--warn); max-width: 14em; }
+
 select.type-select {
+  width: auto;
+  min-width: 9em;
   padding: 6px 10px;
   font-size: 13px;
   border-radius: 8px;
@@ -473,7 +482,7 @@ tr.mine { background: var(--accent-soft); }
 .modal-message.error { color: var(--bad); }
 .modal-message.ok { color: var(--ok); }
 
-.options-inner { padding-top: 14px; }
+.options-inner { padding-top: 0; }
 
 .modal-message.warn { color: var(--warn); }
 
@@ -682,7 +691,12 @@ button.linklike:hover { background: none; color: var(--accent-text); filter: bri
    letter). The badge already says PrintBridge, so "Print" goes first. */
 @media (max-width: 480px) {
   header.one-line h1 { display: none; }
+  /* "Help" instead of "Need help?" leaves room for the person's name. */
+  header.one-line .help-long { display: none; }
+  header.one-line .help-short { display: inline; }
+  header.one-line .name-chip { max-width: none; }
 }
+.help-short { display: none; }
 @media (max-width: 380px) {
   header.one-line { gap: 6px; padding: 10px 10px; }
   header.one-line .brand-mark { font-size: 11px; letter-spacing: 0.06em; padding: 3px 6px 2px; }

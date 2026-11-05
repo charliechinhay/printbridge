@@ -114,7 +114,9 @@ function typeCell(printer) {
   for (const [val, label] of TYPE_CHOICES) {
     const opt = document.createElement("option");
     opt.value = val;
-    opt.textContent = label;
+    // "Automatic" says what it guessed from the name, so a wrong guess shows.
+    const guessed = TYPE_CHOICES.find(([v]) => v === printer.kind);
+    opt.textContent = val === "auto" ? (guessed ? "Automatic (" + guessed[1] + ")" : "Automatic (can't tell)") : label;
     if (val === current) opt.selected = true;
     sel.appendChild(opt);
   }
@@ -133,6 +135,15 @@ function typeCell(printer) {
     }
   };
   cell.appendChild(sel);
+  // Set by hand to something its name doesn't look like (a laser set as
+  // inkjet, say): point it out, since it decides which printers stand in.
+  const guessed = TYPE_CHOICES.find(([v]) => v === printer.kind);
+  if (current !== "auto" && guessed && guessed[0] !== current) {
+    const warn = document.createElement("span");
+    warn.className = "type-warn";
+    warn.textContent = "Its name looks like a " + guessed[1].toLowerCase() + " printer. Check this is right.";
+    cell.appendChild(warn);
+  }
   return cell;
 }
 

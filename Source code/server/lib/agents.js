@@ -168,6 +168,7 @@ function listPrintersForManaging() {
         online: isOnline(p.agentId),
         hidden: !!p.hidden,
         printerType: PRINTER_TYPES.has(p.printerType) ? p.printerType : "auto",
+        kind: kindOf(Object.assign({}, p, { printerType: "auto" })), // what "Automatic" means for it
         colorMode: COLOR_MODES.has(p.colorMode) ? p.colorMode : "auto",
         // What the computer itself said (true, false, or null: doesn't know).
         reportedColor: p.reportedCapabilities === undefined
