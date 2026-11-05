@@ -538,6 +538,7 @@ async function check(reason) {
 
   const say = (status, extra) => {
     state.status = status;
+    state.statusAt = Date.now();
     Object.assign(state, extra || {});
     writeState(state);
   };
@@ -691,6 +692,33 @@ function start(options) {
       return "ok";
     },
   };
+}
+
+// What "Update PrintBridge now" tells the person, in plain words. `state` is
+// state.json; `askedAt` is when they asked, so an answer left by an earlier
+// check is not mistaken for this one. Returns { done, text }: done is false
+// while the check has no answer yet (a download going on counts as an answer
+// once it has begun, since it carries on by itself).
+function updateNowOutcome(state, askedAt) {
+  const s = state || {};
+  const name = require("./brand").NAME;
+  if (s.lastCheckAt >= askedAt && s.lastCheckOk === false) {
+    return { done: true, text: name + " couldn't reach the update site just now, so it couldn't look for a new version.\n\nCheck that this computer is online, then try again. (It also tries again by itself every hour.)" };
+  }
+  if (!(s.statusAt >= askedAt)) return { done: false, text: "" };
+  const v = s.latest && s.latest.version ? " " + s.latest.version : "";
+  const by = "\n\nYou don't need to do anything: " + name + " restarts by itself when it is done, and printing carries on.";
+  switch (s.status) {
+    case "current": return { done: true, text: name + " is up to date.\n\nThis computer has version " + VERSION + ", the newest one." };
+    case "downloading": return { done: true, text: "A new version" + v + " was found and is being downloaded now." + by };
+    case "waiting-quiet": return { done: true, text: "A new version" + v + " is ready. It will install as soon as nothing is printing" + (s.waitingFor ? " (" + s.waitingFor + ")" : "") + "." + by };
+    case "installing": return { done: true, text: "A new version" + v + " is being installed now. " + name + " restarts by itself in a minute or two." };
+    case "waiting-turn": return { done: true, text: "A new version" + v + " was found. Every computer takes its turn within half an hour, so this one will start shortly." + by };
+    case "paused": return { done: true, text: "A new version" + v + " is published but on hold for now, so it isn't being installed. This computer stays on version " + VERSION + "." };
+    case "manual": return { done: true, text: "A new version" + v + " can't be installed by itself from version " + VERSION + ". Download it from the " + name + " download page and run it." };
+    case "failed": case "gave-up": case "retry-later": return { done: true, text: "A new version" + v + " was found, but installing it didn't work here.\n\nRun " + name + " Setup again from the download page, or ask whoever looks after the computers." };
+    default: return { done: true, text: name + " looked for a new version. Open \"Check " + name + "\" to see how it went." };
+  }
 }
 
 // --- the runner's side (started as "apply-update <dir>") ----------------------
@@ -870,6 +898,6 @@ function report() {
 }
 
 module.exports = {
-  start, applyUpdate, isInstalling, report, compareVersions, signatureMatches, fetchManifest, updateDir,
+  start, applyUpdate, isInstalling, report, compareVersions, signatureMatches, fetchManifest, updateDir, updateNowOutcome, readState,
   UPDATE_TASK, UPDATE_LABEL, UPDATE_PLIST,
 };

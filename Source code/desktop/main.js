@@ -140,21 +140,39 @@ async function main() {
 
     case "update-now": {
       const B = require("./lib/brand");
+      const { showMessage } = require("./lib/win");
+      const updater = require("./lib/updater");
+      // This command is started from the Start menu (minimised) or a Terminal
+      // window that closes at once, so what happened is shown in a message
+      // window, as well as printed.
+      const tell = async (text) => {
+        console.log(text.replace(/\n+/g, " "));
+        await showMessage(B.NAME, text);
+      };
+      const askedAt = Date.now();
       const answer = await require("./lib/supervisor").ask(P.LOCK_PORT, "update-check");
       if (answer === "ok" || answer === "busy") {
-        console.log(B.NAME + " is looking for a new version now. If there is one, it is downloaded and installed by itself " +
-          "(after any printing that is going on). \"Check " + B.NAME + "\" shows how it went.");
+        // The look takes a few seconds; wait for its answer so the window
+        // says what was found, not just that something started.
+        let outcome = { done: false, text: "" };
+        for (let i = 0; i < 40 && !outcome.done; i++) {
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          outcome = updater.updateNowOutcome(updater.readState(), askedAt);
+        }
+        await tell(outcome.done
+          ? outcome.text
+          : B.NAME + " is still looking for a new version. If there is one, it is downloaded and installed by itself (after any printing that is going on). \"Check " + B.NAME + "\" shows how it went.");
       } else if (answer.startsWith("off:no-key")) {
-        console.log("Automatic updates aren't set up in this version of " + B.NAME + ".");
+        await tell("Automatic updates aren't set up in this version of " + B.NAME + ".");
       } else if (answer.startsWith("off:switched-off")) {
-        console.log("Automatic updates are switched off on this computer (update-settings.json in " + P.DATA_DIR + ").");
+        await tell("Automatic updates are switched off on this computer (update-settings.json in " + P.DATA_DIR + ").");
       } else if (answer.startsWith("off:")) {
-        console.log(P.IS_WINDOWS
+        await tell(P.IS_WINDOWS
           ? "Updates are installed by " + B.NAME + "'s startup task, which isn't running on this computer. Run " + B.NAME + " Setup again to fix this."
           : "Updates can't be installed by the copy of " + B.NAME + " that is running. Restart " + B.NAME + " and try again.");
         process.exitCode = 1;
       } else {
-        console.log(B.NAME + " isn't running, so it can't look for updates. Restart it first.");
+        await tell(B.NAME + " isn't running, so it can't look for updates. Restart it first.");
         process.exitCode = 1;
       }
       return;

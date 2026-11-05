@@ -66,7 +66,7 @@ Install the **main computer** first, then the **computers with printers**, then 
 | `Source code/installer-mac` | macOS `.pkg` and `.dmg` installer scripts |
 | `Source code/relay` | Optional Cloudflare Worker drop page for remote printing ("Printing from anywhere") |
 | `Source code/release/publish-update.js` | Key generation, version bumping, release signing, and publishing |
-| `Source code/tests` | Automated test suites (`t1-durable.js` through `t16-other-printer.js`) |
+| `Source code/tests` | Automated test suites (`t1-durable.js` through `t17-update-now.js`) |
 | `BUILD-ALL.command` | Builds both the Windows and Mac installers from start to finish on a Mac |
 | `PUBLISH-UPDATE.command` | Signs the release manifest and publishes an automatic update |
 
@@ -90,6 +90,7 @@ node t13-upload-retry.js
 node t14-preview-files.js
 node t15-page-view.js
 node t16-other-printer.js
+node t17-update-now.js
 ```
 
 ---

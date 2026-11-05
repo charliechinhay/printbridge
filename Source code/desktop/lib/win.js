@@ -90,6 +90,32 @@ function openInBrowser(target) {
   }
 }
 
+// A message window with one OK button, for the commands people start from
+// the Start menu or Applications folder: their console window is minimised
+// or closes at once, so printing a line there shows nothing. The text goes in
+// through the environment, so no quoting can break it. Resolves when it is
+// closed (or at once if no window could be shown).
+function showMessage(title, text) {
+  const env = Object.assign({}, process.env, { PB_TITLE: title, PB_TEXT: text });
+  const wait = 10 * 60 * 1000;
+  if (P.IS_WINDOWS) {
+    return powershell(
+      "Add-Type -AssemblyName System.Windows.Forms; " +
+      "$o = New-Object System.Windows.Forms.Form -Property @{TopMost = $true}; " +
+      "[void][System.Windows.Forms.MessageBox]::Show($o, $env:PB_TEXT, $env:PB_TITLE, 'OK', 'Information')",
+      { env, timeout: wait }
+    );
+  }
+  if (P.IS_MAC) {
+    return run(
+      "/usr/bin/osascript",
+      ["-e", 'display dialog (system attribute "PB_TEXT") with title (system attribute "PB_TITLE") buttons {"OK"} default button 1 with icon note'],
+      { env, timeout: wait }
+    );
+  }
+  return Promise.resolve({ ok: false });
+}
+
 // The addresses other devices can use to reach this computer, best first:
 // ordinary office ranges (192.168.x, 10.x, 172.16-31.x) before anything
 // else, and virtual adapters (VirtualBox, Hyper-V, WSL, VPNs) last.
@@ -108,4 +134,4 @@ function lanAddresses() {
   return out.sort((a, b) => a.rank - b.rank).map((e) => e.address);
 }
 
-module.exports = { run, powershell, jsonList, openInBrowser, lanAddresses, consoleUser };
+module.exports = { run, powershell, jsonList, openInBrowser, lanAddresses, consoleUser, showMessage };

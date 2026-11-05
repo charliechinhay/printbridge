@@ -51,7 +51,7 @@ SetCompressorDictSize 64
 !define TAGLINE "Print from any computer to any printer in the office."
 !define COMPANY "Devnith AE"
 !define CREDIT "${U+2615} by @devnithdev"
-!define VERSION "4.2.9"
+!define VERSION "4.2.10"
 !define EXE "OfficePrinting.exe"
 !define UNINSTKEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\OfficePrinting"
 !define RUNKEY "Software\Microsoft\Windows\CurrentVersion\Run"
@@ -1322,7 +1322,14 @@ Section "${BRAND}" SecMain
   CreateShortcut "$SMPROGRAMS\${BRAND}\${BRAND}.lnk" "$INSTDIR\${EXE}" "open" "$INSTDIR\office-printing.ico" 0 SW_SHOWNORMAL "" "Open the printing page"
   CreateShortcut "$SMPROGRAMS\${BRAND}\Check ${BRAND}.lnk" "$INSTDIR\${EXE}" "check" "$INSTDIR\office-printing.ico" 0 SW_SHOWNORMAL "" "See whether everything is working"
   CreateShortcut "$SMPROGRAMS\${BRAND}\Restart ${BRAND}.lnk" "$INSTDIR\${EXE}" "restart" "$INSTDIR\office-printing.ico" 0 SW_SHOWNORMAL "" "Stop and start ${BRAND} on this computer"
-  CreateShortcut "$SMPROGRAMS\${BRAND}\Update ${BRAND} now.lnk" "$INSTDIR\${EXE}" "update-now" "$INSTDIR\office-printing.ico" 0 SW_SHOWMINIMIZED "" "Look for a new version now (it installs by itself)"
+  ; "Update now" runs through a tiny script that starts the program with no
+  ; window at all (the program is a console program, which would otherwise
+  ; flash a black command window). It tells the person what it found in an
+  ; ordinary message box.
+  FileOpen $9 "$INSTDIR\update-now.vbs" w
+  FileWrite $9 'CreateObject("WScript.Shell").Run """$INSTDIR\${EXE}"" update-now", 0, False$\r$\n'
+  FileClose $9
+  CreateShortcut "$SMPROGRAMS\${BRAND}\Update ${BRAND} now.lnk" "$SYSDIR\wscript.exe" '//B "$INSTDIR\update-now.vbs"' "$INSTDIR\office-printing.ico" 0 SW_SHOWNORMAL "" "Look for a new version now (it installs by itself)"
   CreateShortcut "$SMPROGRAMS\${BRAND}\Read me.lnk" "$INSTDIR\README.txt"
   CreateShortcut "$DESKTOP\${BRAND}.lnk" "$INSTDIR\${EXE}" "open" "$INSTDIR\office-printing.ico" 0 SW_SHOWNORMAL "" "Open the printing page"
 
@@ -1758,6 +1765,7 @@ Section "Uninstall"
   Delete "$INSTDIR\SumatraPDF-LICENCE.txt"
   Delete "$INSTDIR\office-printing.ico"
   Delete "$INSTDIR\README.txt"
+  Delete "$INSTDIR\update-now.vbs"
   Delete "$INSTDIR\Uninstall Office Printing.exe"
   ; Automatic updates' folder (a downloaded installer, notes).
   RMDir /r "$INSTDIR\updates"
