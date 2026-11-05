@@ -96,7 +96,7 @@ EOF
 cat > "$MENU_DIR/Update PrintBridge now.command" <<EOF
 #!/bin/bash
 # Asks the running background program to look for a new version now. New
-# versions install by themselves anyway (every few hours); this just doesn't
+# versions install by themselves anyway (every hour); this just doesn't
 # wait. No password needed: it only installs versions signed for PrintBridge.
 "$APP_BIN" update-now
 sleep 4

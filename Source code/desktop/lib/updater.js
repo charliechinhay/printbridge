@@ -2,7 +2,7 @@
 //
 // How it works:
 //
-//   1. Every few hours (update-config.js) the background program downloads
+//   1. Every hour (update-config.js) the background program downloads
 //      latest.json - a small file saying what the newest version is and
 //      where its installers are - and latest.json.sig, its signature.
 //   2. latest.json is only believed if its signature matches one of the

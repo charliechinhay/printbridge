@@ -379,6 +379,7 @@ async function showPrintModal(message) {
   $("printMessage").className = "modal-message" + (message ? " warn" : "");
   $("printMessage").textContent = message || "";
   $("failover").checked = false;
+  $("otherKind").checked = false;
   if (!printers.length) {
     try { await loadPrinters(true); } catch (err) { /* shown below as "no printers" */ }
   }
@@ -1035,17 +1036,27 @@ function renderPrinterPick() {
   updatePrintButton();
 }
 
-// "Print on another one if this is off" - only offered when there is
-// another printer of the same kind, since the server only moves it to one.
+// "Print on another one if this is off" - only offered when such a printer
+// exists. Inkjet and laser may also stand in for each other (second, smaller
+// tick box); dot matrix and receipt printers only for their own kind.
+const OFFICE_SWAP = { inkjet: "laser", laser: "inkjet" };
 function renderFailoverLine() {
   const printer = selectedPrinter();
-  const others = printer && printer.kind !== "unknown"
-    ? printers.filter((p) => p.id !== printer.id && p.kind === printer.kind)
-    : [];
-  $("failoverLine").hidden = !others.length;
-  if (!others.length) $("failover").checked = false;
-  else $("failoverLabel").textContent =
-    "If this printer is off or fails, print on another " + KINDS[printer.kind].name.toLowerCase() + " printer instead";
+  const kind = printer && KINDS[printer.kind] && printer.kind !== "unknown" ? printer.kind : null;
+  const swap = kind && OFFICE_SWAP[kind];
+  const same = kind && printers.some((p) => p.id !== printer.id && p.kind === kind);
+  const other = swap && printers.some((p) => p.kind === swap);
+  $("sameKindLine").hidden = !same;
+  $("otherKindLine").hidden = !other;
+  $("failoverLine").hidden = !same && !other;
+  if (!same) $("failover").checked = false;
+  if (!other) $("otherKind").checked = false;
+  if (same) $("failoverLabel").textContent =
+    "If this printer is off or fails, print on another " + KINDS[kind].name.toLowerCase() + " printer";
+  const swapName = (swap === "inkjet" ? "an " : "a ") + (swap && KINDS[swap].name.toLowerCase()) + " printer instead";
+  if (other) $("otherKindLabel").textContent = same
+    ? "Or " + swapName
+    : "If this printer is off or fails, print on " + swapName;
 }
 
 const PRINTER_ICON_BODY = '<path d="M7 9V3h10v6"/><rect x="3" y="9" width="18" height="8" rx="2"/>';
@@ -1222,7 +1233,7 @@ async function submitPrint() {
           uploadId: entry.uploadId,
           printerId: printer.id,
           options: Object.assign({}, common, { pageRanges: rangesText(entry.chosen) }),
-          tryOtherPrinter: $("failover").checked ? "true" : "false",
+          tryOtherPrinter: $("otherKind").checked ? "other" : $("failover").checked ? "same" : "false",
           label,
         }),
       });

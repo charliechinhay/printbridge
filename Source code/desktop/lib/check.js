@@ -173,7 +173,7 @@ function updatesRow(add) {
     return;
   }
   if (!state.lastCheckAt) {
-    add(true, "Automatic updates are on", "This is version " + esc(VERSION) + ". It looks for new versions a few minutes after starting, then every few hours.");
+    add(true, "Automatic updates are on", "This is version " + esc(VERSION) + ". It looks for new versions a few minutes after starting, then every hour.");
     return;
   }
   if (!state.lastCheckOk && (!state.lastSuccessAt || Date.now() - state.lastSuccessAt > 3 * 24 * 3600 * 1000)) {

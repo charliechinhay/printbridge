@@ -17,7 +17,7 @@ module.exports = {
   MANIFEST_URL: "https://github.com/devnithdev/printbridge-updates/releases/latest/download/latest.json",
   // How often each computer looks. A small random amount is added so the
   // office's computers don't all ask (and download) at the same moment.
-  CHECK_EVERY_HOURS: 6,
+  CHECK_EVERY_HOURS: 1,
   // The first look after starting, so a computer that was off for a week
   // catches up soon after it is switched on.
   FIRST_CHECK_MINUTES: 3,

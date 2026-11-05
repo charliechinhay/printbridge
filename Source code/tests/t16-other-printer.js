@@ -50,10 +50,44 @@ ok(j2.printerId === "laser2", "laser fails -> tried on the other laser");
 agents.events.emit("status", { agentId: "a3", jobId: j2.id, status: "failed", message: "jam" });
 ok(j2.status === "failed" && sent.every((s) => s.printer !== "EPSON LQ-310" || s.agentId === "a2") && j2.printerId === "laser2", "both lasers fail -> it stops, never the dot matrix");
 
+// 4.2.7: inkjet and laser may stand in for each other, only when asked, and
+// never for dot matrix or receipt printers.
+db.printers.push(P("ink1", "a1", "EPSON L3250 Series"), P("ink2", "a2", "Canon G3010 series"), P("tm1", "a1", "EPSON TM-T82 Receipt"), P("tm2", "a3", "Xprinter XP-80 thermal"), P("dot2", "a3", "OKI ML320"));
+const byId = (id) => db.printers.find((p) => p.id === id);
+ok(jobs.otherPrinterLike(byId("ink1"), {}, []).id === "ink2", "inkjet -> another inkjet first");
+ok(jobs.otherPrinterLike(byId("ink1"), {}, ["ink2"]) === null, "no other inkjet and laser not allowed -> no stand-in");
+ok(agents.kindOf(jobs.otherPrinterLike(byId("ink1"), {}, ["ink2"], true)) === "laser", "inkjet with 'a laser instead' -> a laser");
+ok(jobs.otherPrinterLike(byId("laser1"), {}, ["laser2"], true).id === "ink1", "laser with 'an inkjet instead' -> an inkjet");
+ok(jobs.otherPrinterLike(byId("laser1"), {}, [], true).id === "laser2", "laser with both ticked still prefers a laser");
+ok(jobs.otherPrinterLike(byId("dot1"), {}, [], true).id === "dot2", "dot matrix -> only another dot matrix");
+ok(jobs.otherPrinterLike(byId("tm1"), {}, [], true).id === "tm2", "receipt -> only another receipt printer");
+ok(jobs.otherPrinterLike(byId("dot1"), {}, ["dot2"], true) === null && jobs.otherPrinterLike(byId("tm1"), {}, ["tm2"], true) === null, "dot matrix / receipt never move to inkjet or laser");
+ok(!["dotmatrix", "thermal"].includes(agents.kindOf(jobs.otherPrinterLike(byId("ink1"), {}, ["ink2", "laser2"], true))), "inkjet never goes to dot matrix or receipt");
+const newJob2 = (printer, allowOtherKind) => jobs.createJob({ deviceId: "d", label: "x", file: { originalName: "a.pdf", storedPath: path.join(dir, "u", "a.pdf") }, printer, options: {}, allowFailover: true, allowOtherKind });
+const j3 = newJob2(byId("ink1"), true);
+jobs.dispatch(j3);
+agents.events.emit("status", { agentId: "a1", jobId: j3.id, status: "failed", message: "jam" });
+ok(j3.printerId === "ink2", "inkjet fails -> the other inkjet first");
+agents.events.emit("status", { agentId: "a2", jobId: j3.id, status: "failed", message: "jam" });
+ok(agents.kindOf(byId(j3.printerId)) === "laser", "both inkjets fail -> a laser, when ticked");
+const j4 = newJob2(byId("ink1"), false);
+jobs.dispatch(j4);
+agents.events.emit("status", { agentId: "a1", jobId: j4.id, status: "failed", message: "jam" });
+agents.events.emit("status", { agentId: "a2", jobId: j4.id, status: "failed", message: "jam" });
+ok(j4.status === "failed", "both inkjets fail, laser not ticked -> it stops");
+ok(jobs.createJob({ deviceId: "d", label: "x", file: { originalName: "a.pdf", storedPath: path.join(dir, "u", "a.pdf") }, printer: byId("ink1"), options: {}, allowFailover: false, allowOtherKind: true }).allowOtherKind === false, "'a laser instead' does nothing while the option is off");
+const j5 = newJob2(byId("ink1"), true);
+jobs.dispatch(j5);
+online.delete("a1");
+agents.events.emit("agent-offline", "a1");
+ok(j5.printerId === "ink1" && j5.status === "queued", "computer goes off after sending -> waits, even with 'a laser instead'");
+online.add("a1");
+
 const server = fs.readFileSync(S + "/server.js", "utf8");
+ok(/tryOther === "other"/.test(server) && /tryOther === "true" \|\| tryOther === "same"/.test(server), "page values: same (or 4.2.6's true) and other are understood");
 ok(!/req\.body\.allowFailover/.test(server) && /req\.body\.tryOtherPrinter/.test(server), "old pages' allowFailover (ticked by default) is ignored");
 const page = fs.readFileSync(S + "/public/index.html", "utf8");
-ok(/<input id="failover" type="checkbox">/.test(page) && !/options-fold/.test(page), "the option is off by default and the More options fold is gone");
+ok(/<input id="failover" type="checkbox">/.test(page) && /<input id="otherKind" type="checkbox">/.test(page) && !/options-fold/.test(page), "both options are off by default and the More options fold is gone");
 
 console.log(n + " checks passed");
 process.exit(0);

@@ -396,7 +396,7 @@ async function upload(info) {
       await publishToRepoWithApi(r, v, "PrintBridge " + v, manifest.notes || ("PrintBridge " + v), assets, token);
     }
     say("\nPublished to " + repos.map((r) => "github.com/" + r).join(" and ") + ".");
-    say("Every computer updates itself within about 6 hours, after any printing that is going on");
+    say("Every computer updates itself within about an hour, after any printing that is going on");
     say("(or straight away with \"Update PrintBridge now\"). Check PrintBridge on each one shows how it went.");
     return;
   }
@@ -419,7 +419,7 @@ async function upload(info) {
     execFileSync("gh", ["release", "create", "v" + v, ...assets, "--repo", r, "--title", "PrintBridge " + v,
       "--notes", manifest.notes || ("PrintBridge " + v), "--latest"], { stdio: "inherit" });
   }
-  say("\nPublished. Every computer updates itself within about 6 hours, after any printing that is going on");
+  say("\nPublished. Every computer updates itself within about an hour, after any printing that is going on");
   say("(or straight away with \"Update PrintBridge now\"). Check PrintBridge on each one shows how it went.");
 }
 

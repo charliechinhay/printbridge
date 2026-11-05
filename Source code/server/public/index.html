@@ -9,12 +9,14 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='4' y='1' width='8' height='4' rx='1' fill='%231E6FBF'/%3E%3Crect x='1' y='5' width='14' height='6' rx='1.5' fill='%231E6FBF'/%3E%3Crect x='4' y='9' width='8' height='6' rx='1' fill='%23ffffff' stroke='%231E6FBF'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="/style.css">
   <script src="/theme.js"></script>
+  <script src="/lang.js" defer></script>
 </head>
 <body>
+  <div id="langPick" class="lang-pick"></div>
   <div id="alertBanners" class="alert-banners"></div>
 
   <header class="one-line">
-    <span class="brand-mark" aria-label="PrintBridge">PRINTBRIDGE</span>
+    <span class="brand-mark notranslate" translate="no" aria-label="PrintBridge">PRINTBRIDGE</span>
     <h1>Print</h1>
     <div class="spacer"></div>
     <button class="name-chip" id="nameChip" type="button" title="Change your name"></button>
@@ -46,6 +48,14 @@
       </p>
       <input id="fileInput" type="file" hidden multiple
              accept=".pdf,.doc,.docx,.odt,.rtf,.txt,.xls,.xlsx,.ods,.ppt,.pptx,.odp,.png,.jpg,.jpeg,.gif,.bmp,.tif,.tiff,.webp,image/*">
+    </div>
+
+    <!-- The how-to video. YouTube is only loaded when tapped, to save data. -->
+    <div class="howto" id="howto">
+      <button type="button" class="howto-btn" onclick="this.parentNode.innerHTML='<iframe src=&quot;https://www.youtube-nocookie.com/embed/R-5XXXhX6Mg?autoplay=1&amp;rel=0&quot; title=&quot;How to print from your phone&quot; allow=&quot;autoplay; encrypted-media; picture-in-picture&quot; allowfullscreen></iframe>'">
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>
+        Watch how to print (1 minute)
+      </button>
     </div>
 
     <div class="card" id="queueCard">
@@ -98,9 +108,15 @@
 
         <section class="settings-pane">
           <div id="printerPick"></div>
-          <div class="checkline other-printer" id="failoverLine">
-            <input id="failover" type="checkbox">
-            <label for="failover" id="failoverLabel">If this printer is off or fails, print on another one of the same kind</label>
+          <div class="other-printer" id="failoverLine">
+            <div class="checkline" id="sameKindLine">
+              <input id="failover" type="checkbox">
+              <label for="failover" id="failoverLabel">If this printer is off or fails, print on another one of the same kind</label>
+            </div>
+            <div class="checkline other-kind" id="otherKindLine" hidden>
+              <input id="otherKind" type="checkbox">
+              <label for="otherKind" id="otherKindLabel">A laser printer is fine too</label>
+            </div>
           </div>
 
           <div class="layout-opts" id="layoutOpts">

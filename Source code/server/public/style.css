@@ -353,7 +353,8 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent-soft
   margin-top: 12px; padding: 11px 12px; border-radius: 10px;
   background: var(--accent-soft); font-weight: 500;
 }
-.other-printer[hidden] { display: none; }
+.other-printer[hidden], .other-printer .checkline[hidden] { display: none; }
+.other-printer .other-kind { margin-top: 8px; font-size: 13px; font-weight: 400; }
 
 .going-to {
   background: var(--accent-soft);
@@ -718,3 +719,16 @@ button.linklike:hover { background: none; color: var(--accent-text); filter: bri
 .paper, .poster { color-scheme: light; }
 
 @media print { .theme-btn { display: none !important; } }
+
+/* Language picker (lang.js) and hiding Google Translate's own bar. */
+.lang-pick { display: flex; align-items: center; justify-content: flex-end; gap: 6px; padding: 6px 14px 0; color: var(--muted); }
+.lang-pick select { width: auto; font-size: 13px; padding: 4px 8px; }
+.lang-label { display: inline-flex; margin: 0; }
+body { top: 0 !important; }
+body > .skiptranslate, iframe.skiptranslate, #goog-gt-tt, .goog-te-banner-frame { display: none !important; }
+
+/* How-to video: a button first, the YouTube player only after a tap. */
+.howto { margin: 12px 0 0; text-align: center; }
+.howto-btn { display: inline-flex; align-items: center; gap: 8px; width: auto; padding: 9px 16px; border-radius: 999px; border: 1.5px solid var(--accent); background: transparent; color: var(--accent); font-weight: 600; font-size: 14px; cursor: pointer; }
+.howto iframe { display: block; width: 100%; height: 52vw; max-height: 430px; border: 0; border-radius: 12px; }
+@supports (aspect-ratio: 1 / 1) { .howto iframe { height: auto; max-height: none; aspect-ratio: 16 / 9; } }

@@ -156,7 +156,7 @@ function setStatus(job, status, message) {
   broadcastQueue();
 }
 
-function createJob({ deviceId, label, file, printer, options, allowFailover }) {
+function createJob({ deviceId, label, file, printer, options, allowFailover, allowOtherKind }) {
   const job = {
     id: newId("job"),
     deviceId,
@@ -168,6 +168,7 @@ function createJob({ deviceId, label, file, printer, options, allowFailover }) {
     agentId: printer.agentId,
     options,
     allowFailover: !!allowFailover,
+    allowOtherKind: !!allowFailover && !!allowOtherKind,
     status: "queued",
     statusMessage: "",
     createdAt: Date.now(),
@@ -238,25 +239,31 @@ function dispatch(job) {
 // Pick another printer which is online, is the same kind as this one (a
 // letter must never come out of a dot matrix printer), supports the same
 // options, and which we have not tried yet. None when we can't tell its kind.
-function otherPrinterLike(printer, options, triedIds) {
+// orOtherOffice: an inkjet may also go to a laser and the other way round
+// (same kind is still tried first). Dot matrix and receipt never mix.
+const OFFICE_SWAP = { inkjet: "laser", laser: "inkjet" };
+function otherPrinterLike(printer, options, triedIds, orOtherOffice) {
   const kind = agents.kindOf(printer);
   if (kind === "unknown") return null;
-  return (
-    db.printers.find(
+  const kinds = orOtherOffice && OFFICE_SWAP[kind] ? [kind, OFFICE_SWAP[kind]] : [kind];
+  for (const k of kinds) {
+    const found = db.printers.find(
       (p) =>
         p.id !== printer.id &&
         !triedIds.includes(p.id) &&
         !p.hidden &&
         agents.isOnline(p.agentId) &&
-        agents.kindOf(p) === kind &&
+        agents.kindOf(p) === k &&
         printerSupports(p, options)
-    ) || null
-  );
+    );
+    if (found) return found;
+  }
+  return null;
 }
 
 function findFallbackPrinter(job) {
   const current = agents.findPrinter(job.printerId);
-  return current ? otherPrinterLike(current, job.options, job.triedPrinterIds) : null;
+  return current ? otherPrinterLike(current, job.options, job.triedPrinterIds, job.allowOtherKind) : null;
 }
 
 function finish(job, status, message) {

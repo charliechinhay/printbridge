@@ -19,7 +19,7 @@ websites (`fake-web.js`) on spare ports, so nothing else needs to be running.
     node t14-preview-files.js  the preview library is sent gzipped to browsers that can take it
 
     node t15-page-view.js    closing the large page preview frees its image; reopening the same page works
-    node t16-other-printer.js  a job only moves to the same kind of printer, never because a computer dropped off
+    node t16-other-printer.js  a job only moves to the same kind (inkjet/laser to each other if ticked), never because a computer dropped off
 
 These run on Linux/macOS. The Windows-only parts (the Task Scheduler task,
 the installer) are covered by manual checks on Windows and Mac.

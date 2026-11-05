@@ -30,7 +30,7 @@ const help = require("./lib/help");
 const held = require("./lib/held");
 
 const PORT = parseInt(process.env.PORT, 10) || 3000;
-const VERSION = "4.2.6";
+const VERSION = "4.2.7";
 const MAX_UPLOAD_MB = parseInt(process.env.MAX_UPLOAD_MB, 10) || 50;
 const UPLOAD_DIR = jobs.UPLOAD_DIR;
 
@@ -337,7 +337,11 @@ app.post("/api/print", upload.single("file"), handleAsync(async (req, res) => {
 
   // A new name on purpose: pages from before 4.2.6 ticked "use another one"
   // by default and send allowFailover, which is now ignored.
-  const allowFailover = String(req.body.tryOtherPrinter || "") === "true";
+  // "true" (4.2.6 pages) or "same" = same kind only; "other" = inkjet and
+  // laser may also stand in for each other.
+  const tryOther = String(req.body.tryOtherPrinter || "");
+  const allowFailover = tryOther === "true" || tryOther === "same" || tryOther === "other";
+  const allowOtherKind = tryOther === "other";
 
   // Anything that is not already a PDF is converted here on the server.
   let storedPath;
@@ -360,7 +364,7 @@ app.post("/api/print", upload.single("file"), handleAsync(async (req, res) => {
   // different printer right away instead of waiting.
   let target = printer;
   if (!agents.isOnline(printer.agentId) && allowFailover) {
-    const alternative = jobs.otherPrinterLike(printer, options, []);
+    const alternative = jobs.otherPrinterLike(printer, options, [], allowOtherKind);
     if (alternative) target = alternative;
   }
 
@@ -371,6 +375,7 @@ app.post("/api/print", upload.single("file"), handleAsync(async (req, res) => {
     printer: target,
     options,
     allowFailover,
+    allowOtherKind,
   });
 
   if (target.id !== printer.id) {
