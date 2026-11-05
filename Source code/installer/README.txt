@@ -53,6 +53,7 @@ printer" to let it move to another printer of the same kind if yours is
 off or fails (a second, smaller tick lets inkjet and laser stand in for
 each other). Choose a language (Sinhala, Tamil and more) at the top of
 the page. A 3-minute video guide: https://youtu.be/Cx2plyjPf7w
+(Sinhala: https://youtu.be/sP1R5dWC5Hw  Tamil: https://youtu.be/5sw9WdwODrY)
 
 To print the wall sign, open the printing page on the main computer and
 go to  http://localhost:3000/poster.html

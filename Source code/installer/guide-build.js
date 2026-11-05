@@ -140,7 +140,7 @@ c.push(
     "That's all. Anyone on the office network prints from their own phone or computer by opening the address on the sign, and on the computers from step 3 and 4, from any program by choosing the **PrintBridge** printer. No app, no account, no password.",
   ]),
   P("**Already using the older version** (the folder of files with PrintAgent.exe and .bat files)? Use this same file. Setup finds the old version, keeps your list of printers, and switches the old one off. Do the main computer first (see Step 3 of \"Setting up the main computer\")."),
-  P("**Prefer to watch?** A 3-minute video shows all of it, from installing to printing from a phone and from Excel: **https://youtu.be/Cx2plyjPf7w**. The printing page has a **Watch the full guide** button too."),
+  P("**Prefer to watch?** A 3-minute video shows all of it, from installing to printing from a phone and from Excel: **https://youtu.be/Cx2plyjPf7w** (Sinhala: **https://youtu.be/sP1R5dWC5Hw**, Tamil: **https://youtu.be/5sw9WdwODrY**). The printing page has a **Watch the full guide** button too, which plays the one in the language picked."),
   H2("What's in this guide"),
   bullet("Before you start"),
   bullet("Setting up the main computer"),
