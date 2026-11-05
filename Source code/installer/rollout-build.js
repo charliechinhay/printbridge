@@ -177,6 +177,7 @@ c.push(
     ["github.com/devnithdev/printbridge-updates (public)", "The installers and the signed `latest.json`. Every office computer checks its latest release. Its website is the download page: devnithdev.github.io/printbridge-updates"],
     ["youtu.be/Cx2plyjPf7w", "The 3-minute video guide, linked from the printing page and the download page."],
     ["youtu.be/sP1R5dWC5Hw, youtu.be/5sw9WdwODrY", "The same guide in Sinhala and in Tamil; the pages play these when that language is picked."],
+    ["youtu.be/R-5XXXhX6Mg, youtu.be/oU3_QhFajBc, youtu.be/4WxqC4cTjJE", "The short phone-only video in English, Sinhala and Tamil; the download page plays the one for the language picked."],
   ], 3600),
 );
 

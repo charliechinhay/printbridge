@@ -37,7 +37,7 @@ One main computer runs the printing page, computers with printers share them, an
 * **Smart print preview & queue**: Page-by-page visual preview, printer cards that show the maker, kind (inkjet, laser, dot matrix, receipt) and colour or black & white, and live queue tracking. A print goes only to the printer you chose.
 * **Optional back-up printer**: Tick it and, if your printer is off or fails, the job moves to a printer of the same kind. Inkjet and laser stand in for each other only with a second tick; dot matrix and receipt printers only use their own kind. Off by default.
 * **Your language**: A language picker on the printing page, with Sinhala and Tamil first and every other Google Translate language after them.
-* **A 3-minute video guide** in [English](https://youtu.be/Cx2plyjPf7w), [Sinhala](https://youtu.be/sP1R5dWC5Hw) and [Tamil](https://youtu.be/5sw9WdwODrY): installing on Windows and Mac, printing from a phone, from the page and from Excel.
+* **A 3-minute video guide** in [English](https://youtu.be/Cx2plyjPf7w), [Sinhala](https://youtu.be/sP1R5dWC5Hw) and [Tamil](https://youtu.be/5sw9WdwODrY): installing on Windows and Mac, printing from a phone, from the page and from Excel. A short video shows just printing from a phone, in [English](https://youtu.be/R-5XXXhX6Mg), [Sinhala](https://youtu.be/oU3_QhFajBc) and [Tamil](https://youtu.be/4WxqC4cTjJE).
 * **Self-healing**: Resumes automatically after power cuts, automatically rediscovers network addresses, and checks for signed updates every hour, installing them only when nothing is printing.
 
 ---
