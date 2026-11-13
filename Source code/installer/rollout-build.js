@@ -169,7 +169,7 @@ c.push(
     ["`Source code/tests`", "The automatic checks."],
     ["`Source code/installer`", "Windows Setup, the installer's Read me, and the scripts that make the Setup Guide and Proposal (`guide-build.js`, `proposal-build.js`, and this document: `rollout-build.js`)."],
     ["`~/Desktop/PrintBridge/printbridge-updates`", "A git copy of **devnithdev/printbridge-updates**: the download page, the FAQ and `lang.js`. Edit and push it like any repository; GitHub Pages shows it within a minute."],
-    ["Desktop folder `PrintBridge-Installers-<version>-<date>`", "Made by every build: the installers and a Read me. Earlier builds are never overwritten."],
+    ["`~/Desktop/PrintBridge/PrintBridge-Installers-<version>-<date>`", "Made by every build: the installers and a Read me. Earlier builds are never overwritten."],
   ], 3600),
   H2("Online"),
   ...table2(["Where", "What"], [
@@ -229,7 +229,7 @@ c.push(
   ...box("Why the long build command", [
     "Without `LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8`, a Terminal with no UTF-8 setting makes Windows Setup's builder crash (`std::bad_alloc`). Save the build output to a file as shown, and don't pipe it into `tail`: that hides a failed build.",
   ]),
-  P("The installers land in a new Desktop folder named like `PrintBridge-Installers-4.3.0-2026-11-05_1211`: `PrintBridgeSetup.exe` (Windows), `PrintBridge.pkg` and `PrintBridge-4.3.0.dmg` (Mac), and a Read me."),
+  P("The installers land in a new folder in `~/Desktop/PrintBridge`, named like `PrintBridge-Installers-4.3.0-2026-11-05_1211`: `PrintBridgeSetup.exe` (Windows), `PrintBridge.pkg` and `PrintBridge-4.3.0.dmg` (Mac), and a Read me."),
 );
 
 // ---------- 5 ----------
