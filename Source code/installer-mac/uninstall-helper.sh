@@ -34,6 +34,9 @@ rm -f "/Library/LaunchDaemons/com.printbridge.update.plist"
 # computer from a printer or client computer - see uninstall.js.
 "$APP_BIN" before-uninstall "$KEEP_LO" || true
 
+# The Application Firewall entry postinstall added.
+/usr/libexec/ApplicationFirewall/socketfilterfw --remove "$APP_BIN" >/dev/null 2>&1 || true
+
 # The menu items (Open, Check, Restart, Reconfigure, Uninstall - see
 # postinstall). Not "saved data" - always removed.
 rm -rf "/Applications/PrintBridge"

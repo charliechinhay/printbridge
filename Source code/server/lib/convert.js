@@ -10,7 +10,7 @@ const os = require("os");
 
 const CONVERTIBLE = new Set([
   ".doc", ".docx", ".odt", ".rtf", ".txt",
-  ".xls", ".xlsx", ".ods",
+  ".xls", ".xlsx", ".xlsm", ".ods", ".csv",
   ".ppt", ".pptx", ".odp",
   ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".tif", ".tiff", ".webp",
 ]);

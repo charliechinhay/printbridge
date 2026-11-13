@@ -12,14 +12,14 @@
 </head>
 <body class="manage-page">
   <header>
-    <span class="brand-mark" aria-label="PrintBridge">PRINTBRIDGE</span>
+    <span class="brand-mark" role="img" aria-label="PrintBridge">PRINTBRIDGE</span>
     <h1>Printers &amp; setup</h1>
     <div class="spacer"></div>
-    <button class="secondary" onclick="location.href='/'" type="button">Back to printing</button>
+    <a class="button secondary" href="/">Back to printing</a>
   </header>
 
   <main>
-    <div id="pageMessage" class="page-message" hidden></div>
+    <div id="pageMessage" class="page-message" role="status" aria-live="polite" hidden></div>
 
     <div class="card">
       <h2>Add a printer</h2>
@@ -49,7 +49,7 @@
       <p class="hint" style="margin-top:6px">
         Type and colour show on each printer&rsquo;s card on the printing page.
         They also decide which printers may stand in for each other when someone
-        ticks &ldquo;Print on another printer&rdquo;, so check they are right: a
+        ticks &ldquo;If this printer is off or fails, print on another printer&rdquo;, so check they are right: a
         laser printer set as inkjet won&rsquo;t stand in for a laser.
       </p>
     </div>
@@ -148,7 +148,7 @@
         Print this once and stick it next to the printer. Anyone can scan the
         code with a phone camera and start printing &mdash; nothing to install.
       </p>
-      <button onclick="location.href='/poster.html'" type="button">Open the sign</button>
+      <a class="button" href="/poster.html">Open the sign</a>
     </div>
 
     <div class="footer-links">

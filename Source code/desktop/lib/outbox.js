@@ -323,7 +323,8 @@ function showProblem(name, kept, reason, refused) {
   // same name, so the pages already open in the browser silently changed
   // to a later document's - telling someone their spreadsheet failed when
   // the page in front of them was about a different file entirely.
-  const file = path.join(os.tmpdir(), "office-printing-not-sent-" + Date.now() + ".html");
+  // A random part, and "wx" below, so a file or link planted under the name is never written through.
+  const file = path.join(os.tmpdir(), "office-printing-not-sent-" + Date.now() + "-" + require("crypto").randomBytes(6).toString("hex") + ".html");
   const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Not printed</title>
 ${T.head()}
 <style>${T.CSS}
@@ -340,7 +341,7 @@ ${kept ? `<p>A copy was kept here for a week, in case you need it:<br><code>${es
 <p class="credit">${esc(B.NAME)} &middot; ${B.CREDIT_HTML}</p>
 </main></body></html>`;
   try {
-    fs.writeFileSync(file, html);
+    fs.writeFileSync(file, html, { flag: "wx" });
     openInBrowser(file);
   } catch (err) {
     /* nothing more to do */
@@ -365,7 +366,7 @@ function tidy() {
   // yesterday's are cleared out here rather than being left to pile up.
   try {
     for (const n of fs.readdirSync(os.tmpdir())) {
-      if (!/^office-printing-not-sent-\d+\.html$/.test(n)) continue;
+      if (!/^office-printing-not-sent-\d+(-[0-9a-f]+)?\.html$/.test(n)) continue;
       const full = path.join(os.tmpdir(), n);
       try { if (fs.statSync(full).mtimeMs < dayAgo) fs.rmSync(full, { force: true }); } catch (err) { /* ignore */ }
     }

@@ -137,7 +137,7 @@ function steps(items) {
 const code = (text) => new Paragraph({ indent: { left: 567 }, spacing: { after: 100 }, shading: { type: ShadingType.CLEAR, fill: LIGHT, color: "auto" },
   children: [new TextRun({ text, font: "Consolas", size: 19 })] });
 
-const REPO = "~/Desktop/Clenol/printbridge-app";
+const REPO = "~/Desktop/PrintBridge/printbridge-app";
 const c = [];
 
 // ---------- cover ----------
@@ -168,7 +168,7 @@ c.push(
     ["`Source code/release`", "`publish-update.js` (raise the version, sign, upload) and `check-live.js` (check what is live)."],
     ["`Source code/tests`", "The automatic checks."],
     ["`Source code/installer`", "Windows Setup, the installer's Read me, and the scripts that make the Setup Guide and Proposal (`guide-build.js`, `proposal-build.js`, and this document: `rollout-build.js`)."],
-    ["`~/Desktop/Clenol/printbridge-updates`", "A git copy of **devnithdev/printbridge-updates**: the download page, the FAQ and `lang.js`. Edit and push it like any repository; GitHub Pages shows it within a minute."],
+    ["`~/Desktop/PrintBridge/printbridge-updates`", "A git copy of **devnithdev/printbridge-updates**: the download page, the FAQ and `lang.js`. Edit and push it like any repository; GitHub Pages shows it within a minute."],
     ["Desktop folder `PrintBridge-Installers-<version>-<date>`", "Made by every build: the installers and a Read me. Earlier builds are never overwritten."],
   ], 3600),
   H2("Online"),
@@ -212,14 +212,14 @@ c.push(
   H1("4. Making a new version"),
   ...steps([
     "Make your changes in `" + REPO + "`. Changing what people see on the printing page (`Source code/server/public`)? Look at it in a browser as in section 5.",
-    "Changed `Source code/server/public/lang.js`? Copy it to `~/Desktop/Clenol/printbridge-updates/lang.js` too: the download page uses the same file.",
+    "Changed `Source code/server/public/lang.js`? Copy it to `~/Desktop/PrintBridge/printbridge-updates/lang.js` too: the download page uses the same file.",
     "Raise the version number. It must be higher than the last one published (see the Releases page):",
     code("cd " + REPO + "/\"Source code\"/release"),
     code("node publish-update.js bump 4.3.0"),
     "It changes the number everywhere it is written. Don't change it by hand.",
     "Run the checks. Each one ends with \"N checks passed\":",
     code("cd " + REPO + "/\"Source code\"/tests"),
-    code("for t in t1-durable t3-store t10-updates t11-fixip t12-remote t13-upload-retry t14-preview-files t15-page-view t16-other-printer; do node $t.js > /dev/null && echo \"ok $t\" || echo \"FAILED $t\"; done"),
+    code("for t in t1-durable t3-store t10-updates t11-fixip t12-remote t13-upload-retry t14-preview-files t15-page-view t16-other-printer t17-update-now t18-bad-messages; do node $t.js > /dev/null && echo \"ok $t\" || echo \"FAILED $t\"; done"),
     "Any FAILED: run that one on its own (`node t16-other-printer.js`) to see why, and fix it before going on. (t2, t4, t5, t6 and t9 need a network card and are slower; run them before bigger changes.)",
     "Build:",
     code("cd " + REPO),

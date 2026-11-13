@@ -15,6 +15,8 @@
 # Needs: Node.js, makensis (brew install makensis), Xcode command line tools,
 # and Rosetta on an Apple Silicon Mac. It prints "Done" at the end.
 set -e
+# makensis crashes (std::bad_alloc) without a UTF-8 locale.
+export LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 SRC="$ROOT/Source code"
 VERSION="$(sed -n 's/.*VERSION: "\([^"]*\)".*/\1/p' "$SRC/desktop/lib/version.js")"

@@ -17,7 +17,7 @@
 ; Silent install, for anyone setting up many computers:
 ;   PrintBridgeSetup.exe /S /ROLE=main|printer|client /NAME="Front desk"
 ;                        /SERVER=192.168.1.20 /LIBREOFFICE=0|1
-;                        /KEEPAWAKE=0|1 /LIDACTION=0|1|3 /BATACTION=0|1|2|3
+;                        /KEEPAWAKE=0|1 /LIDACTION=0|1|2|3 /BATACTION=0|1|2|3
 ;                        /TAKEOVER=1  (main computer: make it the only one -
 ;                        every other main computer switches over to it)
 ;                        /FIXADDRESS=1 or /FIXADDRESS=192.168.1.200
@@ -51,7 +51,7 @@ SetCompressorDictSize 64
 !define TAGLINE "Print from any computer to any printer in the office."
 !define COMPANY "Devnith AE"
 !define CREDIT "${U+2615} by @devnithdev"
-!define VERSION "4.2.11"
+!define VERSION "4.2.12"
 !define EXE "OfficePrinting.exe"
 !define UNINSTKEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\OfficePrinting"
 !define RUNKEY "Software\Microsoft\Windows\CurrentVersion\Run"

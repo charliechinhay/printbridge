@@ -46,7 +46,7 @@
     return post("/api/code", { code: code }).then(function (r) {
       $("codeGo").disabled = false;
       if (r._status !== 200) {
-        if (!quiet) say($("codeMsg"), r.error || "That didn't work. Try again.");
+        if (!quiet || r._status === 429) say($("codeMsg"), r.error || "That didn't work. Try again.");
         if (r._status === 403) store("pb-code", null);
         show("step-code");
         return;
@@ -103,6 +103,12 @@
   ["dragenter", "dragover"].forEach(function (t) { drop.addEventListener(t, function (e) { e.preventDefault(); drop.classList.add("over"); }); });
   ["dragleave", "drop"].forEach(function (t) { drop.addEventListener(t, function (e) { e.preventDefault(); drop.classList.remove("over"); }); });
   drop.addEventListener("drop", function (e) { if (e.dataTransfer && e.dataTransfer.files[0]) choose(e.dataTransfer.files[0]); });
+  // A file dropped just outside the box would otherwise open in the tab and lose the page.
+  document.addEventListener("dragover", function (e) { e.preventDefault(); });
+  document.addEventListener("drop", function (e) {
+    e.preventDefault();
+    if (!drop.contains(e.target) && e.dataTransfer && e.dataTransfer.files[0] && !$("step-send").hidden) choose(e.dataTransfer.files[0]);
+  });
 
   $("notMe").addEventListener("click", function () {
     store("pb-code", null); session = null; $("code").value = ""; show("step-code"); $("code").focus();
@@ -181,12 +187,12 @@
   var timer = null;
   var STATES = {
     waiting: ["📨", "Sent", "Waiting for the office computer to collect it."],
-    received: ["📥", "At the office", "It's being got ready for the printer."],
+    received: ["📥", "At the office", "Getting it ready for the printer."],
     held: ["✋", "Waiting for approval", "Someone at the office will check it and press Print."],
     printing: ["🖨️", "Printing", "It's on its way to the printer."],
     done: ["✅", "Printed", "Collect it from the printer."],
-    failed: ["⚠️", "Not printed", ""],
-    rejected: ["🚫", "Not printed", "The office decided not to print this one."],
+    failed: ["⚠️", "Didn't print", ""],
+    rejected: ["🚫", "Didn't print", "The office decided not to print this one."],
   };
   function paint(st, online, message) {
     var s = STATES[st] || STATES.waiting;
@@ -196,22 +202,25 @@
     if (st === "waiting" && !online) text = "The office computer is switched off right now. It prints as soon as it's back on - you can close this page.";
     $("stText").textContent = text;
   }
+  var trackGen = 0;
   function track(id, online) {
     clearTimeout(timer);
     paint("waiting", online);
-    var tries = 0;
+    var tries = 0, gen = ++trackGen;
     (function tick() {
       post("/api/status", { id: id, code: session.code }).then(function (r) {
+        if (gen !== trackGen) return; // "Send another file" started a new one
+        if (r._status === 404) return; // the record has expired: nothing more to learn
         if (r._status === 200) {
           paint(r.status, r.online, r.message);
           if (["done", "failed", "rejected"].indexOf(r.status) !== -1) return;
         }
         tries++;
         timer = setTimeout(tick, tries < 60 ? 5000 : 30000);
-      }).catch(function () { timer = setTimeout(tick, 15000); });
+      }).catch(function () { if (gen === trackGen) timer = setTimeout(tick, 15000); });
     })();
   }
-  $("again").addEventListener("click", function () { clearTimeout(timer); fillSend(); show("step-send"); });
+  $("again").addEventListener("click", function () { clearTimeout(timer); trackGen++; fillSend(); show("step-send"); });
 
   // --- start ------------------------------------------------------------------------
   var saved = store("pb-code");

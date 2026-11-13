@@ -36,8 +36,11 @@ function setMyName(name) {
   $("nameChip").textContent = name || "Set your name";
 }
 
+// One timer for every message: a newer message is never cleared by an older one's timer.
+let pageMessageTimer = null;
 function setPageMessage(text, kind) {
   const box = $("pageMessage");
+  clearTimeout(pageMessageTimer);
   if (!text) {
     box.hidden = true;
     box.textContent = "";
@@ -717,7 +720,7 @@ function makeThumb(entry, n) {
   tick.type = "button";
   tick.className = "tick";
   tick.setAttribute("aria-pressed", chosen ? "true" : "false");
-  tick.setAttribute("aria-label", (chosen ? "Unchoose page " : "Choose page ") + n);
+  tick.setAttribute("aria-label", (chosen ? "Leave out page " : "Choose page ") + n);
   tick.title = chosen ? "Chosen: this page prints" : "Choose this page";
   tick.innerHTML = chosen ? "&#10003;" : "";
   tick.onclick = () => togglePage(entry, n);
@@ -872,7 +875,7 @@ function renderSegments() {
     for (const button of $(id).querySelectorAll("button")) {
       const on = button.dataset.value === layout[key];
       button.classList.toggle("on", on);
-      button.setAttribute("aria-checked", on ? "true" : "false");
+      button.setAttribute("aria-pressed", on ? "true" : "false");
     }
   }
 }
@@ -1127,7 +1130,7 @@ function renderOptions() {
 
   if (caps.color === true) {
     box.appendChild(field("Colour", selectEl("optColor", [
-      ["monochrome", "Black and white"],
+      ["monochrome", "Black & white"],
       ["color", "Colour"],
     ], "monochrome")));
   }
@@ -1267,7 +1270,7 @@ async function submitPrint() {
         : "Sent to " + printer.name + ". Go and collect it.",
       "ok"
     );
-    setTimeout(() => setPageMessage(null), 6000);
+    pageMessageTimer = setTimeout(() => setPageMessage(null), 6000);
   }
 }
 
@@ -1362,11 +1365,13 @@ function startHelpCooldown() {
     const secondsLeft = Math.ceil((helpCooldownUntil - Date.now()) / 1000);
     if (secondsLeft <= 0) {
       button.disabled = false;
-      button.textContent = "Need help?";
+      button.querySelector(".help-long").textContent = "Need help?";
+      button.querySelector(".help-short").textContent = "Help";
       return;
     }
     button.disabled = true;
-    button.textContent = "Asked (" + secondsLeft + "s)";
+    button.querySelector(".help-long").textContent = "Asked (" + secondsLeft + "s)";
+    button.querySelector(".help-short").textContent = secondsLeft + "s";
     setTimeout(tick, 1000);
   };
   tick();
@@ -1412,7 +1417,6 @@ async function loadQueue() {
 // Finished jobs drop out of the queue. If one of yours dropped out because
 // it failed, say so and why - otherwise it would just silently disappear.
 let myActiveJobIds = null; // null until the first queue arrives
-let failureTimer = null;
 
 function noticeMyFinishedJobs(list) {
   const nowMine = new Set(list.filter((job) => job.isMine).map((job) => job.id));
@@ -1422,16 +1426,19 @@ function noticeMyFinishedJobs(list) {
 
   api("/api/my-jobs")
     .then((mine) => {
-      const failed = mine.filter((job) => gone.includes(job.id) && job.status === "failed");
+      // Failed jobs, and cancelled ones that may still come out (their message says so).
+      const failed = mine.filter((job) => gone.includes(job.id) &&
+        (job.status === "failed" || (job.status === "cancelled" && job.statusMessage && job.statusMessage !== "Cancelled.")));
       if (!failed.length) return;
       setPageMessage(
         failed
-          .map((job) => "Didn't print: " + job.fileName + " - " + (job.statusMessage || "the printer reported a problem."))
+          .map((job) => job.status === "cancelled"
+            ? job.fileName + ": " + job.statusMessage
+            : "Didn't print: " + job.fileName + " - " + (job.statusMessage || "the printer reported a problem."))
           .join(" / "),
         "error"
       );
-      clearTimeout(failureTimer);
-      failureTimer = setTimeout(() => setPageMessage(null), 30000);
+      pageMessageTimer = setTimeout(() => setPageMessage(null), 30000);
     })
     .catch(() => {});
 }
@@ -1622,3 +1629,33 @@ function escapeHtml(value) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 }
+
+// Dialogs: focus moves in when one opens, the page behind can't be tabbed to,
+// and focus returns to what opened it when it closes.
+(function watchDialogs() {
+  const overlays = [...document.querySelectorAll(".modal-overlay")];
+  const behind = [document.querySelector("header"), document.querySelector("main"), $("langPick"), $("alertBanners")].filter(Boolean);
+  const openers = new Map();
+  const sync = () => {
+    const anyOpen = overlays.some((o) => !o.hidden);
+    for (const el of behind) el.inert = anyOpen;
+  };
+  for (const overlay of overlays) {
+    new MutationObserver(() => {
+      if (!overlay.hidden) {
+        if (!openers.has(overlay)) openers.set(overlay, document.activeElement);
+        sync();
+        if (!overlay.contains(document.activeElement)) {
+          const first = overlay.querySelector("input:not([type=hidden]):not([disabled]), textarea, select, button:not([disabled])");
+          if (first) first.focus();
+        }
+      } else {
+        sync();
+        const opener = openers.get(overlay);
+        openers.delete(overlay);
+        if (opener && opener.isConnected && typeof opener.focus === "function") opener.focus();
+      }
+    }).observe(overlay, { attributes: true, attributeFilter: ["hidden"] });
+  }
+  sync();
+})();

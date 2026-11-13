@@ -30,7 +30,7 @@ const help = require("./lib/help");
 const held = require("./lib/held");
 
 const PORT = parseInt(process.env.PORT, 10) || 3000;
-const VERSION = "4.2.11";
+const VERSION = "4.2.12";
 const MAX_UPLOAD_MB = parseInt(process.env.MAX_UPLOAD_MB, 10) || 50;
 const UPLOAD_DIR = jobs.UPLOAD_DIR;
 
@@ -431,6 +431,10 @@ app.post("/api/jobs/:id/cancel", (req, res) => {
     res.status(404).json({ error: "That isn't one of your print jobs." });
     return;
   }
+  if (["done", "failed", "cancelled"].includes(job.status)) {
+    res.status(409).json({ error: "That one has already finished." });
+    return;
+  }
   if (job.status !== "queued") {
     res.status(400).json({ error: "That one has already started printing." });
     return;
@@ -479,6 +483,7 @@ const HELP_COOLDOWN_MS = 60 * 1000;
 const lastHelpAt = new Map(); // deviceId -> when
 
 app.post("/api/help", (req, res) => {
+  for (const [id, at] of lastHelpAt) if (Date.now() - at > HELP_COOLDOWN_MS) lastHelpAt.delete(id);
   const previous = lastHelpAt.get(req.deviceId) || 0;
   const waitMs = HELP_COOLDOWN_MS - (Date.now() - previous);
   if (waitMs > 0) {
@@ -735,6 +740,8 @@ const remote = require("./lib/remote");
 
 function fromThisComputer(req) {
   const a = String(req.socket.remoteAddress || "");
+  // Behind a local reverse proxy every request looks local, so a forwarded one never counts.
+  if (req.headers["x-forwarded-for"]) return false;
   return a === "127.0.0.1" || a === "::1" || a === "::ffff:127.0.0.1";
 }
 // Problems are shown on the page as they are (they are written for people).
@@ -810,7 +817,7 @@ app.use((err, req, res, next) => {
   if (req.file && req.file.path) fs.unlink(req.file.path, () => {});
 
   if (err && (err.code === "LIMIT_FILE_SIZE" || err.type === "entity.too.large")) {
-    res.status(400).json({ error: "That file is bigger than " + MAX_UPLOAD_MB + " MB." });
+    res.status(413).json({ error: "That file is bigger than " + MAX_UPLOAD_MB + " MB." });
     return;
   }
   console.error(err);
@@ -841,13 +848,13 @@ function beginResponder() {
 }
 
 const server = http.createServer(app);
-const wss = new WebSocketServer({ server, path: "/agent" });
+const wss = new WebSocketServer({ server, path: "/agent", maxPayload: 1024 * 1024 });
 
 wss.on("connection", (socket) => agents.handleConnection(socket));
 agents.startHeartbeat(wss);
 
 setInterval(() => {
-  jobs.sweepUploads();
+  jobs.sweepUploads(remote.pendingFiles());
 }, 60 * 60 * 1000);
 setInterval(() => held.sweep(), 10 * 60 * 1000);
 

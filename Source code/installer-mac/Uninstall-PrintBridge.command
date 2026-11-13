@@ -33,7 +33,7 @@ fi
 CHOICES="$(osascript <<APPLESCRIPT
 $CHOICES_LINE
 if theChoices is false then return "CANCELLED"
-set AppleScript's text item delimiters to linefeed
+set text item delimiters of AppleScript to linefeed
 return theChoices as string
 APPLESCRIPT
 )"
@@ -57,7 +57,9 @@ if [ $STATUS -ne 0 ]; then
   if echo "$RESULT" | grep -qi "User canceled"; then
     exit 0
   fi
-  osascript -e "display dialog \"PrintBridge couldn't be fully removed: $(echo "$RESULT" | tail -c 500 | sed 's/"/\\"/g')\" buttons {\"OK\"} default button 1 with icon caution" >/dev/null 2>&1
+  # Backslashes and quotes escaped, or the AppleScript breaks and no message appears.
+  MSG=$(printf '%s' "$RESULT" | tail -c 500 | sed -e 's/[\\"]/\\&/g')
+  osascript -e "display dialog \"PrintBridge couldn't be fully removed: $MSG\" buttons {\"OK\"} default button 1 with icon caution" >/dev/null 2>&1
   exit 1
 fi
 

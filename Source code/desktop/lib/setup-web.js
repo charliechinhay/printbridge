@@ -465,6 +465,13 @@ function createServer(options) {
   };
   const server = http.createServer(async (req, res) => {
     try {
+      // Only this wizard's own page may send it answers: another website open in the
+      // browser could otherwise post a role or "make this the only main computer".
+      const own = "127.0.0.1:" + P.SETUP_WEB_PORT;
+      if (req.headers.host !== own || (req.method === "POST" && req.headers.origin && req.headers.origin !== "http://" + own)) {
+        res.writeHead(403, { "Content-Type": "text/plain" });
+        return res.end("Not allowed.");
+      }
       const url = new URL(req.url, "http://127.0.0.1");
       if (req.method === "POST" && url.pathname === "/choose") {
         closeSoon(url.searchParams.get("c") === "later" ? "later" : "start");
@@ -636,8 +643,12 @@ async function runInstallFlow(options) {
     // (most likely stuck on the LibreOffice download) - let it finish on
     // its own rather than starting a second, overlapping install.
     console.log("The setup wizard's install is still running past the time limit; letting it finish rather than starting another.");
-    await done;
-    return { start: choice() !== "later" };
+    let finished = false;
+    done.then(() => { finished = true; });
+    // If it fails now nobody may be there to press "Try again": stop waiting and use the recommended settings.
+    await Promise.race([done, (async () => { while (installStarted()) await wait(2000); })()]);
+    if (finished) return { start: choice() !== "later" };
+    console.log("The setup wizard's install failed after the time limit.");
   }
   console.log("The setup wizard wasn't finished in time; using the recommended settings instead.");
   server.close();

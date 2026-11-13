@@ -13,6 +13,7 @@
   --accent-soft: #EAF2FB;
   --accent-text: #1E6FBF;   /* the accent colour when used for writing */
   --brand-green: #21A67B;
+  --brand-green-strong: #16825f; /* behind white writing: readable (4.8:1) */
   --ok: #15803d;
   --warn: #b45309;
   --bad: #b91c1c;
@@ -40,11 +41,12 @@
   --ink: #e8edf4;
   --muted: #9ba8ba;
   --line: #2f3b4f;
-  --accent: #2f7fcf;
+  --accent: #1E6FBF;
   --accent-dark: #4b95e0;   /* buttons get lighter, not darker, when pointed at */
   --accent-soft: #1a2f4a;
   --accent-text: #74b6f4;
   --brand-green: #21A67B;
+  --brand-green-strong: #16825f; /* behind white writing: readable (4.8:1) */
   --ok: #4ade80;
   --warn: #fbbf24;
   --bad: #f87171;
@@ -127,8 +129,8 @@ header .spacer { flex: 1; }
    writing on navy, which can't be read). */
 .name-chip:hover { border-color: var(--accent); background: var(--bg); }
 
-.help-btn { background: var(--brand-green); }
-.help-btn:hover { background: var(--brand-green); filter: brightness(1.06); }
+.help-btn { background: var(--brand-green-strong); }
+.help-btn:hover { background: var(--brand-green-strong); filter: brightness(1.08); }
 
 /* "Refresh address": looks for the main computer's address again. */
 .refresh-btn {
@@ -224,8 +226,10 @@ main {
 
 /* --- buttons ------------------------------------------------------------ */
 
-button {
+button, a.button {
   font: inherit;
+  display: inline-block;
+  text-decoration: none;
   padding: 10px 18px;
   border-radius: 9px;
   border: 1px solid transparent;
@@ -234,9 +238,9 @@ button {
   cursor: pointer;
   font-weight: 550;
 }
-button:hover { background: var(--accent-dark); }
-button.secondary { background: var(--field); color: var(--ink); border-color: var(--line); font-weight: 450; }
-button.secondary:hover { background: var(--bg); }
+button:hover, a.button:hover { background: var(--accent-dark); }
+button.secondary, a.button.secondary { background: var(--field); color: var(--ink); border-color: var(--line); font-weight: 450; }
+button.secondary:hover, a.button.secondary:hover { background: var(--bg); }
 button.danger { background: var(--field); color: var(--bad); border-color: var(--line); font-weight: 450; }
 button.danger:hover { background: var(--danger-hover); }
 button.ghost {
@@ -272,9 +276,10 @@ select.type-select {
   color: var(--ink);
   cursor: pointer;
 }
-select.type-select:focus {
-  outline: none;
-  border-color: var(--brand);
+select.type-select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-color: var(--accent);
 }
 
 .big-print {
@@ -392,6 +397,7 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent-soft
 .file-chip button {
   background: transparent; border: none; color: var(--muted);
   font-size: 19px; line-height: 1; padding: 0 4px; cursor: pointer;
+  min-width: 40px; min-height: 40px;
 }
 .file-chip button:hover { color: var(--bad); background: transparent; }
 
@@ -473,6 +479,7 @@ tr.mine { background: var(--accent-soft); }
 .icon-btn {
   background: transparent; border: none; color: var(--muted);
   font-size: 24px; line-height: 1; padding: 0 6px; cursor: pointer;
+  min-width: 40px; min-height: 40px;
 }
 .icon-btn:hover { background: transparent; color: var(--ink); }
 
@@ -590,7 +597,7 @@ button.linklike:hover { background: none; color: var(--accent-text); filter: bri
 .paper.big { padding: 0; cursor: default; flex: none; }
 .pv-foot { display: flex; gap: 10px; padding: 12px 16px; border-top: 1px solid var(--line); }
 .pv-choose { flex: 1; }
-.pv-choose.on { background: var(--brand-green); }
+.pv-choose.on { background: var(--brand-green-strong); }
 .pv-choose[hidden] { display: none; }
 
 @media (max-width: 760px) {
@@ -616,10 +623,9 @@ button.linklike:hover { background: none; color: var(--accent-text); filter: bri
 /* --- help alert banners --------------------------------------------------- */
 
 .alert-banners {
-  position: fixed;
-  top: 66px;
-  left: 50%;
-  transform: translateX(-50%);
+  position: sticky;
+  top: 8px;
+  margin: 8px auto 0;
   /* Under the dialogs (z-index 50), so a call for help never covers the
      "Print this?" screen someone is filling in; it shows once that closes. */
   z-index: 40;
@@ -743,6 +749,10 @@ body > .skiptranslate, iframe.skiptranslate, #goog-gt-tt, .goog-te-banner-frame 
 
 /* How-to video: a button first, the YouTube player only after a tap. */
 .howto { margin: 12px 0 0; text-align: center; }
-.howto-btn { display: inline-flex; align-items: center; gap: 8px; width: auto; padding: 9px 16px; border-radius: 999px; border: 1.5px solid var(--accent); background: transparent; color: var(--accent); font-weight: 600; font-size: 14px; cursor: pointer; }
+.howto-btn { display: inline-flex; align-items: center; gap: 8px; width: auto; padding: 9px 16px; border-radius: 999px; border: 1.5px solid var(--accent); background: transparent; color: var(--accent-text); font-weight: 600; font-size: 14px; cursor: pointer; }
+.howto-btn:hover { background: var(--accent-soft); color: var(--accent-text); }
 .howto iframe { display: block; width: 100%; height: 52vw; max-height: 430px; border: 0; border-radius: 12px; }
 @supports (aspect-ratio: 1 / 1) { .howto iframe { height: auto; max-height: none; aspect-ratio: 16 / 9; } }
+
+.alert-banners:empty { display: none; }
+#queueTable td { overflow-wrap: anywhere; }

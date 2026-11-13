@@ -183,6 +183,7 @@ function unlock(job, blob) {
   const headerLength = plain.readUInt32BE(0);
   if (headerLength > 4096) throw new Error("The file's details aren't readable.");
   const header = JSON.parse(plain.subarray(4, 4 + headerLength).toString("utf8"));
+  if (!header || typeof header !== "object") throw new Error("The file's details aren't readable.");
   return { header, data: plain.subarray(4 + headerLength) };
 }
 
@@ -238,6 +239,7 @@ async function printFile(entry, filePath) {
 }
 
 async function collect(job) {
+  if (!/^[A-Za-z0-9_-]{1,80}$/.test(String(job.id))) throw new Error("bad job id");
   const person = state.people.find((p) => p.id === job.personId && p.codeHash === job.hash);
   const base = { relayId: job.id, person: job.person, personId: job.personId, printer: job.printer, fileName: safeName(job.name) };
   if (!person || person.active === false) {
@@ -265,19 +267,19 @@ async function collect(job) {
     state.pending.push(entry);
     addLog(Object.assign(base, { fileName, result: "held" }));
     save();
-    await report(job.id, "held", "", true);
+    await report(job.id, "held", "", true).catch(() => {});
     return;
   }
   addLog(Object.assign(base, { fileName, result: "printing" }));
   try {
     await printFile(entry, tmp);
     save();
-    await report(job.id, "printing", "", true);
+    await report(job.id, "printing", "", true).catch(() => {});
   } catch (err) {
     fs.unlink(tmp, () => {});
     updateLog(job.id, { result: "failed", message: err.message });
     save();
-    await report(job.id, "failed", err.message, true);
+    await report(job.id, "failed", err.message, true).catch(() => {});
   }
 }
 
@@ -456,12 +458,21 @@ async function approve(relayId, printerName) {
   const entry = state.pending.find((e) => e.relayId === relayId);
   if (!entry) throw new Error("That printout isn't waiting any more.");
   if (printerName) entry.printer = String(printerName);
+  // Taken off the list first, so a second approval can't print it twice.
+  state.pending = state.pending.filter((e) => e !== entry);
   try {
+    if (!fs.existsSync(entry.filePath)) throw new Error("That printout's file has expired. Ask them to send it again.");
     await printFile(entry, entry.filePath);
   } catch (err) {
+    if (fs.existsSync(entry.filePath)) {
+      state.pending.push(entry); // e.g. the printer is off: it can be approved again
+    } else {
+      updateLog(relayId, { result: "failed", message: err.message });
+      save();
+      report(relayId, "failed", err.message, false).catch(() => {});
+    }
     throw err;
   }
-  state.pending = state.pending.filter((e) => e !== entry);
   updateLog(relayId, { result: "printing", printer: entry.printer });
   save();
   report(relayId, "printing", "", false).catch(() => {});
@@ -492,4 +503,8 @@ function stop() {
   timer = null;
 }
 
-module.exports = { isLocked, unlockSettings, lockSettings, start, stop, poll, status, connect, disconnect, addPerson, updatePerson, newCodeFor, removePerson, approve, reject, hashCode, newCode };
+function pendingFiles() {
+  return state.pending.map((e) => path.basename(e.filePath));
+}
+
+module.exports = { pendingFiles, isLocked, unlockSettings, lockSettings, start, stop, poll, status, connect, disconnect, addPerson, updatePerson, newCodeFor, removePerson, approve, reject, hashCode, newCode };

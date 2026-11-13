@@ -156,6 +156,13 @@ function bump(next) {
     ["desktop/tools/relabel-exe/relabel-exe.js", new RegExp('"' + esc(v) + '"', "g"), '"' + next + '"'],
     ["BUILD-ON-MAC.txt", new RegExp("PrintBridge-" + esc(v) + "\\.dmg", "g"), "PrintBridge-" + next + ".dmg"],
     ["installer-mac/BUILD-ON-MAC.txt", new RegExp("PrintBridge-" + esc(v) + "\\.dmg", "g"), "PrintBridge-" + next + ".dmg"],
+    // The lock files carry it twice (the top and the "" package), each right after
+    // the package's name; dependencies' own versions (which have no name) are left alone.
+    ["server/package-lock.json", new RegExp('("name": "[^"]+",\\s*"version": )"' + esc(v) + '"', "g"), '$1"' + next + '"'],
+    ["agent/package-lock.json", new RegExp('("name": "[^"]+",\\s*"version": )"' + esc(v) + '"', "g"), '$1"' + next + '"'],
+    ["desktop/package-lock.json", new RegExp('("name": "[^"]+",\\s*"version": )"' + esc(v) + '"', "g"), '$1"' + next + '"'],
+    // The download site, when its copy sits beside this one (skipped otherwise).
+    ["../../printbridge-updates/index.html", new RegExp('"softwareVersion": "[^"]*"'), '"softwareVersion": "' + next + '"'],
   ];
   for (const [file, re, to] of edits) {
     const full = path.join(SRC, file);
@@ -280,6 +287,7 @@ function gitCredentialToken() {
     const r = spawnSync("git", ["credential", "fill"], {
       input: "protocol=https\nhost=github.com\n\n",
       encoding: "utf8",
+      env: Object.assign({}, process.env, { GIT_TERMINAL_PROMPT: "0" }), // never stop to ask in the terminal
       timeout: 5000,
     });
     if (r.status === 0 && r.stdout) {
@@ -346,14 +354,17 @@ async function publishToRepoWithApi(repo, v, title, notes, assets, token) {
   say("Publishing release v" + v + " on github.com/" + repo + "...");
   const tag = "v" + v;
   let rel = await ghRequest("GET", "https://api.github.com/repos/" + repo + "/releases/tags/" + encodeURIComponent(tag), token);
+  // A new release starts as a draft and is published once every file is up, so the
+  // download buttons (releases/latest/download/...) never point at a missing file.
+  let created = false;
   if (rel.status === 404) {
+    created = true;
     const payload = Buffer.from(JSON.stringify({
       tag_name: tag,
       name: title,
       body: notes,
-      draft: false,
+      draft: true,
       prerelease: false,
-      make_latest: "true",
     }));
     rel = await ghRequest("POST", "https://api.github.com/repos/" + repo + "/releases", token, payload);
   }
@@ -375,6 +386,11 @@ async function publishToRepoWithApi(repo, v, title, notes, assets, token) {
     if (up.status < 200 || up.status >= 300) {
       throw new Error("Failed to upload " + name + " to " + repo + " (" + up.status + "): " + up.text.slice(0, 200));
     }
+  }
+  if (created) {
+    const done = await ghRequest("PATCH", "https://api.github.com/repos/" + repo + "/releases/" + rel.json.id, token,
+      Buffer.from(JSON.stringify({ draft: false, make_latest: "true" })));
+    if (done.status < 200 || done.status >= 300) throw new Error("Couldn't publish the draft release on " + repo + " (" + done.status + ").");
   }
 }
 
@@ -421,8 +437,13 @@ async function upload(info) {
       execFileSync("gh", ["repo", "create", r, "--public", "--description", "PrintBridge installers and automatic-update files"], { stdio: "inherit" });
     }
     say("Publishing release v" + v + " on github.com/" + r + "...");
-    execFileSync("gh", ["release", "create", "v" + v, ...assets, "--repo", r, "--title", "PrintBridge " + v,
-      "--notes", manifest.notes || ("PrintBridge " + v), "--latest"], { stdio: "inherit" });
+    // Already there (a re-run after a partial upload): replace its files instead.
+    if (spawnSync("gh", ["release", "view", "v" + v, "--repo", r], { encoding: "utf8" }).status === 0) {
+      execFileSync("gh", ["release", "upload", "v" + v, ...assets, "--repo", r, "--clobber"], { stdio: "inherit" });
+    } else {
+      execFileSync("gh", ["release", "create", "v" + v, ...assets, "--repo", r, "--title", "PrintBridge " + v,
+        "--notes", manifest.notes || ("PrintBridge " + v), "--latest"], { stdio: "inherit" });
+    }
   }
   say("\nPublished. Every computer updates itself within about an hour, after any printing that is going on");
   say("(or straight away with \"Update PrintBridge now\"). Check PrintBridge on each one shows how it went.");
