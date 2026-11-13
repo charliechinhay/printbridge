@@ -2,7 +2,8 @@
 # Builds PrintBridge for Windows and Mac, start to finish.
 #
 # At the end the finished installers (PrintBridgeSetup.exe, PrintBridge.pkg and
-# PrintBridge-<version>.dmg) are saved in a BRAND NEW folder on your Desktop, named
+# PrintBridge-<version>.dmg) are saved in a BRAND NEW folder beside this repository
+# (for example ~/Desktop/PrintBridge when it is ~/Desktop/PrintBridge/printbridge-app), named
 # with the date and time of the build, so an earlier build is never overwritten.
 # A copy also stays in the "Installers" folder next to this file.
 #
@@ -15,12 +16,14 @@
 # Needs: Node.js, makensis (brew install makensis), Xcode command line tools,
 # and Rosetta on an Apple Silicon Mac. It prints "Done" at the end.
 set -e
+# makensis crashes (std::bad_alloc) without a UTF-8 locale.
+export LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 SRC="$ROOT/Source code"
 VERSION="$(sed -n 's/.*VERSION: "\([^"]*\)".*/\1/p' "$SRC/desktop/lib/version.js")"
 [ -n "$VERSION" ] || { echo "Couldn't read the version from Source code/desktop/lib/version.js." >&2; exit 1; }
 OUT="$ROOT/Installers"
-FINAL="$HOME/Desktop/PrintBridge-Installers-$VERSION-$(date +%Y-%m-%d_%H%M)"
+FINAL="$(dirname "$ROOT")/PrintBridge-Installers-$VERSION-$(date +%Y-%m-%d_%H%M)"
 mkdir -p "$OUT"
 
 echo "Building PrintBridge $VERSION."
@@ -63,7 +66,7 @@ Computers with 4.1.3 or newer update themselves once a version is published (PUB
 TXT
 
 echo
-echo "Done. The finished installers are saved in this new folder on your Desktop:"
+echo "Done. The finished installers are saved in this new folder:"
 echo "  $FINAL"
 ls -la "$FINAL"
 open "$FINAL" 2>/dev/null || true

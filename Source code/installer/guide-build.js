@@ -220,7 +220,7 @@ c.push(
     P("The last page also says that the **PrintBridge** printer was added, so people at this computer can print from Excel, Word and other programs (see \"How people print\")."),
   ]),
   ...box("If LibreOffice couldn't be downloaded", [
-    "The last page says so. Everything else works: PDFs and photos print. Run Setup again later, with the internet working, to try once more.",
+    "The last page says so. Everything else works: PDFs print, but Word, Excel, PowerPoint files and photos won't until LibreOffice is there. Run Setup again later, with the internet working, to try once more.",
   ]),
 );
 
@@ -386,9 +386,9 @@ c.push(
     ["`C:\\Program Files\\Office Printing`", "`OfficePrinting.exe` (the one program, for both roles), `SumatraPDF.exe` (free PDF printing helper, GPL), the uninstaller."],
     ["`C:\\ProgramData\\Office Printing`", "`settings.json` (role, name), `website\\db.json` (list of computers and printers, main computer only), `printer\\config.json` (this computer's connection), `outbox\\` (printouts on their way to the printing page), `install-record.json` (what Setup added, so uninstalling removes exactly that), `logs\\*.log`, `power-before.json`. The Users group can modify this folder."],
     ["Printer", "A Windows printer named `PrintBridge`, using Windows' own `Microsoft Print To PDF` driver, with a Local Port that is the file `C:\\ProgramData\\Office Printing\\outbox\\printout.pdf`. It is never offered on the printing page."],
-    ["Start-up", "Task Scheduler task `Office Printing` (main computer and printer computers): starts the printing website and printer sharing when Windows starts, as the SYSTEM account, before anyone signs in; restarted every minute if it ever fails, never stopped by time limits or battery. Registry value `Office Printing` under `HKLM\\...\\CurrentVersion\\Run`: at every sign-in, starts the part that opens printouts in the browser (and, if the task isn't running, everything else as before). Only one copy of each runs per computer."],
-    ["Firewall (main computer)", "Inbound rules `Office Printing` (the program), `Office Printing (port 3000)` and `Office Printing (finding it)`. The printing page uses **TCP port 3000**; other computers find it by asking on **UDP port 39276**. Other computers connect out to it; they need no open ports."],
-    ["Power (not on computers that only print)", "Sleep and hibernate off, screen off after 10 minutes, lid and power button do nothing, critical battery shuts down cleanly, no automatic restarts for updates while someone is signed in. The previous settings are saved and restored on uninstall."],
+    ["Start-up", "Task Scheduler task `Office Printing` (every computer; on one that only prints it runs nothing but automatic updates): starts the printing website and printer sharing when Windows starts, as the SYSTEM account, before anyone signs in; restarted every minute if it ever fails, never stopped by time limits or battery. Registry value `Office Printing` under `HKLM\\...\\CurrentVersion\\Run`: at every sign-in, starts the part that opens printouts in the browser (and, if the task isn't running, everything else as before). Only one copy of each runs per computer."],
+    ["Firewall", "Every computer: inbound rule `Office Printing` (the program), so it can hear the main computer answer when it looks for it. Main computer also: `Office Printing (port 3000)` and `Office Printing (finding it)`. The printing page uses **TCP port 3000**; other computers find it by asking on **UDP port 39276**. Other computers connect out to it; they need no open ports."],
+    ["Power (not on computers that only print)", "Sleep and hibernate off, screen off after 10 minutes, the lid does nothing (or what was chosen in Setup), the power button shuts down cleanly, critical battery shuts down cleanly, no automatic restarts for updates while someone is signed in. The previous settings are saved and restored on uninstall."],
     ["LibreOffice (optional)", "Downloaded from The Document Foundation and installed silently, without taking over opening Office files. If that fails, `winget` is tried."],
   ], 2900),
   H2("Printing from programs"),

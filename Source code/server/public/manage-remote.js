@@ -4,7 +4,7 @@
 (function () {
   let last = null;
   const RESULT = {
-    printing: "Printing", done: "Printed", failed: "Not printed", rejected: "Not printed (refused)",
+    printing: "Printing", done: "Printed", failed: "Didn't print", rejected: "Didn't print (refused)",
     held: "Waiting for approval", received: "Received",
   };
 
@@ -107,6 +107,9 @@
   function pendingTable(s) {
     $("rmPendingBox").hidden = !s.pending.length;
     const body = $("rmPending").querySelector("tbody");
+    // Keep a printer someone picked but hasn't sent yet across the 10-second refresh.
+    const picked = {};
+    body.querySelectorAll("select[data-id]").forEach((x) => { picked[x.dataset.id] = x.value; });
     body.innerHTML = "";
     for (const e of s.pending) {
       const tr = document.createElement("tr");
@@ -115,7 +118,9 @@
       const pc = document.createElement("td");
       const sel = document.createElement("select");
       for (const n of s.printers) { const o = document.createElement("option"); o.value = n; o.textContent = n; sel.appendChild(o); }
-      sel.value = e.printer;
+      sel.dataset.id = e.id;
+      sel.setAttribute("aria-label", "Printer for " + e.fileName);
+      sel.value = picked[e.id] || e.printer;
       pc.appendChild(sel);
       tr.appendChild(pc);
       const cc = document.createElement("td"); cc.textContent = e.copies; tr.appendChild(cc);
@@ -123,7 +128,11 @@
       const ok = document.createElement("button"); ok.textContent = "Print"; ok.style.marginRight = "6px";
       ok.onclick = async () => { ok.disabled = true; try { await post("/api/remote/pending/" + e.id + "/approve", { printer: sel.value }); await refresh(); } catch (err) { ok.disabled = false; setPageMessage(err.message, "error"); } };
       const no = document.createElement("button"); no.className = "danger"; no.textContent = "Don't print";
-      no.onclick = async () => { if (!confirm("Don't print " + e.fileName + "? " + e.person + " will see it was refused.")) return; await post("/api/remote/pending/" + e.id + "/reject"); await refresh(); };
+      no.onclick = async () => {
+        if (!confirm("Don't print " + e.fileName + "? " + e.person + " will see it was refused.")) return;
+        no.disabled = true;
+        try { await post("/api/remote/pending/" + e.id + "/reject"); } catch (err) { setPageMessage(err.message, "error"); } finally { await refresh(); }
+      };
       ac.append(ok, no);
       tr.appendChild(ac);
       body.appendChild(tr);
@@ -180,7 +189,9 @@
   }
   $("rmUnlock").onclick = doUnlock;
   $("rmUnlockCode").addEventListener("keydown", (e) => { if (e.key === "Enter") doUnlock(); });
-  $("rmLock").onclick = async () => { await post("/api/remote/lock"); await refresh(); };
+  $("rmLock").onclick = async () => {
+    try { await post("/api/remote/lock"); } catch (err) { setPageMessage(err.message, "error"); } finally { await refresh(); }
+  };
 
   $("rmConnect").onclick = async () => {
     const b = $("rmConnect");
@@ -200,18 +211,19 @@
     const name = $("rmName").value.trim();
     if (!name) { setPageMessage("Type the person's name first.", "error"); return; }
     const printers = [...$("rmPrinters").querySelectorAll("input:checked")].map((i) => i.value);
+    $("rmAdd").disabled = true; // a double-click would make two codes
     try {
       const r = await post("/api/remote/people", { name, printers, dailyLimit: $("rmLimit").value, hold: $("rmHold").checked });
       $("rmName").value = "";
       showCode(r.person, r.code);
       await refresh();
     } catch (err) { setPageMessage(err.message, "error"); }
+    finally { $("rmAdd").disabled = false; }
   };
 
   $("rmDisconnect").onclick = async () => {
     if (!confirm("Disconnect the drop page? Nobody can print from outside until it is connected again (the people and their codes are kept).")) return;
-    await post("/api/remote/disconnect");
-    await refresh();
+    try { await post("/api/remote/disconnect"); } catch (err) { setPageMessage(err.message, "error"); } finally { await refresh(); }
   };
 
   refresh();

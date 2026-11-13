@@ -48,7 +48,7 @@ function flushFolder(dir) {
 
 function replace(file, text) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
-  const tmp = file + ".tmp";
+  const tmp = file + "." + process.pid + ".tmp"; // two programs saving at once never share one
   writeAndFlush(tmp, text);
   // On Windows the swap can fail for a moment while antivirus, search
   // indexing or backup software has the file open: try again briefly, and

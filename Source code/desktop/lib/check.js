@@ -159,7 +159,7 @@ function updatesRow(add) {
   const latest = state.latest && state.latest.version;
   if (newer(latest)) {
     const why = {
-      "waiting-turn": "It installs by itself within the next half hour.",
+      "waiting-turn": "It installs by itself within the next " + require("./updater").spreadText(state.spreadMinutes) + ".",
       downloading: "It is being downloaded.",
       "download-failed": "Downloading it didn't work (" + esc(state.lastError || "") + "); it tries again in half an hour.",
       "waiting-quiet": "It installs as soon as nothing is printing here (" + esc(state.waitingFor || "") + ").",

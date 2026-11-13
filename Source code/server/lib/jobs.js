@@ -201,7 +201,7 @@ function trimHistory() {
 function dispatch(job) {
   const printer = agents.findPrinter(job.printerId);
   if (!printer) {
-    finish(job, "failed", "That printer no longer exists.");
+    finish(job, "failed", "That printer is no longer on its computer. Print it again on another printer.");
     return false;
   }
 
@@ -366,7 +366,16 @@ function dispatchQueuedFor(agentId) {
   for (const job of db.jobs) {
     if (job.status !== "queued") continue;
     const printer = agents.findPrinter(job.printerId);
-    if (printer && printer.agentId === agentId) dispatch(job);
+    // A printer its computer no longer lists fails here instead of waiting forever.
+    if (printer ? printer.agentId === agentId : job.agentId === agentId) dispatch(job);
+  }
+}
+
+// A printer removed or renamed on a computer that is online: its waiting jobs fail.
+function failOrphanedJobs() {
+  for (const job of db.jobs) {
+    if (job.status !== "queued" || agents.findPrinter(job.printerId)) continue;
+    if (agents.isOnline(job.agentId)) dispatch(job);
   }
 }
 
@@ -395,8 +404,8 @@ function fileForToken(jobId, token) {
 }
 
 // Delete stray uploads (for example from a crash) that nothing points to.
-function sweepUploads() {
-  const keep = new Set(db.jobs.map((j) => j.storedFile).filter(Boolean));
+function sweepUploads(alsoKeep = []) {
+  const keep = new Set(db.jobs.map((j) => j.storedFile).filter(Boolean).concat(alsoKeep));
   let files = [];
   try {
     files = fs.readdirSync(UPLOAD_DIR);
@@ -486,6 +495,7 @@ function listJobsForDevice(deviceId, limit) {
 // Wire up the agent events.
 agents.events.on("status", handleAgentStatus);
 agents.events.on("agent-online", dispatchQueuedFor);
+agents.events.on("printers-changed", failOrphanedJobs);
 agents.events.on("agent-offline", handleAgentOffline);
 
 // A printer going on or offline changes what the queue should say (a wait

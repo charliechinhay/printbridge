@@ -9,13 +9,22 @@ const fs = require("fs");
 const path = require("path");
 const { run, IS_WINDOWS } = require("./printers");
 
+// Stopped part-way: some pages may be out, so it must not be printed again
+// in full on another printer (noFailover tells the main computer so).
+function partlyPrinted(what) {
+  const err = new Error(what + " Part of it may have printed - check the printer before printing it again.");
+  err.noFailover = true;
+  return err;
+}
+
 // --- macOS and Linux ----------------------------------------------------
 
 function lpArguments(printerName, filePath, options) {
   const args = ["-d", printerName];
 
   if (options.copies && options.copies > 1) args.push("-n", String(options.copies));
-  if (options.paper) args.push("-o", "media=" + options.paper);
+  // One word only: lp splits -o values on spaces, so anything else could add other options.
+  if (options.paper && /^[\w.-]+$/.test(options.paper)) args.push("-o", "media=" + options.paper);
 
   args.push(
     "-o",
@@ -40,6 +49,7 @@ async function printWithLp(printerName, filePath, options) {
   });
 
   if (!result.ok) {
+    if (result.error && result.error.killed) throw partlyPrinted("The print command took more than 2 minutes, so it was stopped.");
     const detail = (result.stderr || result.stdout || "").trim();
     throw new Error(detail || "The lp command failed.");
   }
@@ -148,7 +158,7 @@ async function printWithSumatra(exe, printerName, filePath, options) {
 
   if (!result.ok) {
     if (result.error && result.error.killed) {
-      throw new Error("SumatraPDF took more than 15 minutes, so it was stopped. Part of it may have printed - check the printer before printing it again.");
+      throw partlyPrinted("SumatraPDF took more than 15 minutes, so it was stopped.");
     }
     const detail = (result.stderr || result.stdout || "").trim();
     throw new Error(detail || "SumatraPDF could not print the file.");
@@ -161,7 +171,7 @@ async function printWithGhostscript(exe, printerName, filePath, options) {
     "-dPrinted",
     "-dBATCH",
     "-dNOPAUSE",
-    "-dNOSAFER",
+    "-dSAFER", // files come from anyone on the network
     "-q",
     "-dNumCopies=" + (options.copies || 1),
     "-sDEVICE=mswinpr2",
@@ -173,12 +183,15 @@ async function printWithGhostscript(exe, printerName, filePath, options) {
   if (simpleRange) {
     args.push("-dFirstPage=" + simpleRange[1]);
     args.push("-dLastPage=" + (simpleRange[2] || simpleRange[1]));
+  } else if (/^\d+(-\d+)?(,\d+(-\d+)?)*$/.test(options.pageRanges || "")) {
+    args.push("-sPageList=" + options.pageRanges); // "1,3,5-7" (Ghostscript 9.20 and newer)
   }
 
   args.push(filePath);
 
   const result = await run(exe, args, { timeout: 180000 });
   if (!result.ok) {
+    if (result.error && result.error.killed) throw partlyPrinted("Ghostscript took more than 3 minutes, so it was stopped.");
     const detail = (result.stderr || result.stdout || "").trim();
     throw new Error(detail || "Ghostscript could not print the file.");
   }

@@ -45,6 +45,7 @@ function rememberPrinters(agent, printers) {
   const seen = new Set();
 
   for (const incoming of printers) {
+    if (!incoming || typeof incoming !== "object") continue;
     const name = String(incoming.name || "").trim();
     if (!name) continue;
     const id = printerId(agent.id, name);
@@ -214,9 +215,10 @@ function handleConnection(socket) {
     } catch (err) {
       return;
     }
+    if (!message || typeof message !== "object") return;
 
     if (message.type === "hello") {
-      const agent = findAgentByToken(message.token);
+      const agent = typeof message.token === "string" ? findAgentByToken(message.token) : null;
       if (!agent) {
         socket.send(
           JSON.stringify({ type: "error", message: "Unknown agent token." })
@@ -241,7 +243,8 @@ function handleConnection(socket) {
       agent.version = message.version || "";
       save();
 
-      rememberPrinters(agent, Array.isArray(message.printers) ? message.printers : []);
+      const printerList = Array.isArray(message.printers) ? message.printers : [];
+      rememberPrinters(agent, printerList);
 
       socket.send(JSON.stringify({ type: "welcome", agentId: agent.id, agentName: agent.name }));
       console.log(
@@ -249,7 +252,7 @@ function handleConnection(socket) {
         agent.name,
         "(" + agent.platform + ")",
         "printers:",
-        (message.printers || []).map((p) => p.name).join(", ") || "none"
+        printerList.map((p) => p && p.name).filter(Boolean).join(", ") || "none"
       );
 
       events.emit("agent-online", agent.id);

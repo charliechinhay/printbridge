@@ -24,6 +24,9 @@ function setPageMessage(text, kind) {
 (async function start() {
   await Promise.allSettled([loadWhere(), loadPrinters(), loadComputers()]);
   setInterval(() => {
+    // Not while someone is using a control in the tables: rebuilding would close it.
+    const active = document.activeElement;
+    if (active && active.closest && active.closest("#printerTable, #computerTable")) return;
     loadPrinters().catch(() => {});
     loadComputers().catch(() => {});
   }, 10000);
@@ -72,6 +75,7 @@ async function loadPrinters() {
     toggle.className = printer.hidden ? "show-btn" : "hide-btn";
     toggle.textContent = printer.hidden ? "Show" : "Hide";
     toggle.title = printer.hidden ? "Show this printer on the print page" : "Hide this printer from the print page";
+    toggle.setAttribute("aria-label", toggle.textContent + " " + printer.name);
     toggle.onclick = async () => {
       toggle.disabled = true;
       try {
@@ -103,13 +107,14 @@ const TYPE_CHOICES = [
   ["inkjet", "Inkjet"],
   ["laser", "Laser"],
   ["dotmatrix", "Dot matrix"],
-  ["thermal", "Thermal / Receipt"],
+  ["thermal", "Receipt (thermal)"],
 ];
 
 function typeCell(printer) {
   const cell = document.createElement("td");
   const sel = document.createElement("select");
   sel.className = "type-select";
+  sel.setAttribute("aria-label", "Type of " + printer.name);
   const current = printer.printerType || "auto";
   for (const [val, label] of TYPE_CHOICES) {
     const opt = document.createElement("option");
@@ -160,6 +165,7 @@ function colorCell(printer) {
     button.type = "button";
     button.textContent = label;
     if (printer.colorMode === mode) button.className = "on";
+    button.setAttribute("aria-pressed", String(printer.colorMode === mode));
     button.onclick = async () => {
       if (printer.colorMode === mode) return;
       for (const b of seg.querySelectorAll("button")) b.disabled = true;
@@ -212,6 +218,7 @@ async function loadComputers() {
     const remove = document.createElement("button");
     remove.className = "danger";
     remove.textContent = "Remove";
+    remove.setAttribute("aria-label", "Remove " + computer.name);
     remove.onclick = async () => {
       if (!confirm(
         "Remove \"" + computer.name + "\"?\n\n" +

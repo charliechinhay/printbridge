@@ -40,9 +40,13 @@ const SETTINGS_DIR = process.env.PRINT_AGENT_DIR || BASE_DIR;
 const CONFIG_FILE = path.join(SETTINGS_DIR, "config.json");
 const STATUS_FILE = path.join(SETTINGS_DIR, "status.json");
 const DOWNLOAD_DIR = path.join(SETTINGS_DIR, "downloads");
-const VERSION = "4.2.11";
+const VERSION = "4.2.12";
 
 fs.mkdirSync(DOWNLOAD_DIR, { recursive: true });
+// Files left by a run that was stopped mid-job (power cut, update): never left lying around.
+for (const name of fs.readdirSync(DOWNLOAD_DIR)) {
+  try { fs.rmSync(path.join(DOWNLOAD_DIR, name), { force: true }); } catch (err) { /* in use: next start */ }
+}
 
 // --- the bundled printing helper ----------------------------------------
 //
@@ -83,7 +87,9 @@ function unpackSumatraIfNeeded() {
     // __dirname points into the read-only bundle inside this .exe, which is
     // exactly where pkg keeps bundled assets - the one place it IS correct.
     const bundled = path.join(__dirname, "tools", "SumatraPDF.exe");
-    fs.writeFileSync(target, fs.readFileSync(bundled));
+    // Through a temporary name, so a crash mid-write never leaves a broken exe that is then kept.
+    fs.writeFileSync(target + ".tmp", fs.readFileSync(bundled));
+    fs.renameSync(target + ".tmp", target);
     fs.writeFileSync(path.join(BASE_DIR, "SumatraPDF-LICENCE.txt"), SUMATRA_NOTICE);
     console.log("Unpacked the printing helper (SumatraPDF.exe) next to this program.");
   } catch (err) {
@@ -615,7 +621,6 @@ function connect() {
 
   socket.on("open", async () => {
     heard();
-    reconnectDelay = 1000;
     failuresInARow = 0;
     searchesInARow = 0;
     movedSearchGap = 2 * 60 * 1000;
@@ -652,6 +657,7 @@ function connect() {
     }
 
     if (message.type === "welcome") {
+      reconnectDelay = 1000; // only once accepted: a refused or replaced connection keeps backing off
       console.log("Server accepted this agent as:", message.agentName);
       writeStatus("connected", "Connected to the printing website.");
       if (MANAGED && !config.serverId) rememberWebsiteId();
@@ -696,10 +702,16 @@ function connect() {
       return;
     }
 
+    if (code === 4004) {
+      // Another computer is using this one's token (a copied program folder):
+      // waiting a minute stops the two replacing each other every second.
+      console.log("Another computer is connected with this computer's token.");
+      reconnectDelay = Math.max(reconnectDelay, 60000);
+    }
     console.log("Trying again in", Math.round(reconnectDelay / 1000), "second(s).");
     setTimeout(connect, reconnectDelay);
     // Wait a little longer each time, up to 30 seconds.
-    reconnectDelay = Math.min(reconnectDelay * 2, 30000);
+    reconnectDelay = Math.min(reconnectDelay * 2, code === 4004 ? 120000 : 30000);
   });
 
   socket.on("error", (err) => {
@@ -798,7 +810,7 @@ const handledJobs = new Map(); // "jobId|printer" -> { status, message, nativeJo
 // be handed out again after a restart, so it isn't used for this).
 const RUN_ID = Date.now().toString(36) + Math.random().toString(36).slice(2);
 try {
-  const saved = JSON.parse(fs.readFileSync(HANDLED_FILE, "utf8"));
+  const saved = durable.readJson(HANDLED_FILE); // survives a power cut mid-save
   for (const [id, entry] of Object.entries(saved || {})) handledJobs.set(id, entry);
 } catch (err) {
   /* none yet */
@@ -808,7 +820,7 @@ try {
 const jobKey = (job) => job.jobId + "|" + job.printer;
 function saveHandled() {
   try {
-    fs.writeFileSync(HANDLED_FILE, JSON.stringify(Object.fromEntries(handledJobs)));
+    durable.writeJson(HANDLED_FILE, Object.fromEntries(handledJobs));
   } catch (err) {
     /* only a safeguard */
   }
@@ -895,8 +907,8 @@ async function handleOneJob(job) {
     reportStatus(job.jobId, "done", result.detail, result.nativeJobId);
   } catch (err) {
     console.log("  printing failed:", err.message);
-    rememberJob(key, { status: "failed", message: err.message });
-    reportStatus(job.jobId, "failed", err.message);
+    rememberJob(key, { status: "failed", message: err.message, noFailover: !!err.noFailover });
+    reportStatus(job.jobId, "failed", err.message, "", !!err.noFailover);
   } finally {
     // Never leave downloaded documents lying around on the computer.
     fs.unlink(filePath, (err) => {

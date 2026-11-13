@@ -77,7 +77,9 @@
   }
   .drop:hover, .drop.over { border-color: var(--brand-text); background: var(--halo); }
   .drop b { color: var(--ink); display: block; word-break: break-all; }
-  .drop input { display: none; }
+  .drop { position: relative; }
+  .drop input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+  .drop:focus-within { border-color: var(--brand-text); background: var(--halo); }
   button.go {
     width: 100%; margin-top: 22px; padding: 14px; border: 0; border-radius: 12px;
     background: var(--brand); color: #fff; font: inherit; font-weight: 600; font-size: 16px; cursor: pointer;
@@ -124,7 +126,7 @@
       <input type="text" id="code" placeholder="PB-XXXX-XXXX-XXXX" spellcheck="false" autocapitalize="characters" inputmode="text" maxlength="24" required>
       <label class="check"><input type="checkbox" id="remember"> Remember it on this device</label>
       <button class="go" type="submit" id="codeGo">Continue</button>
-      <p class="msg bad" id="codeMsg" hidden></p>
+      <p class="msg bad" id="codeMsg" role="alert" hidden></p>
     </form>
 
     <!-- 2. the file -->
@@ -135,7 +137,7 @@
       </div>
       <label class="f" for="printer">Printer</label>
       <select id="printer" required></select>
-      <label class="f">File</label>
+      <label class="f" for="file">File</label>
       <label class="drop" id="drop">
         <input type="file" id="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.xlsm,.ppt,.pptx,.odt,.ods,.odp,.rtf,.txt,.csv,.png,.jpg,.jpeg,.gif,.bmp,.tif,.tiff,.webp">
         <span id="dropText">Choose a file, or drop it here<br><small>PDF, Word, Excel, PowerPoint, text or a picture, up to 20 MB</small></span>
@@ -143,11 +145,11 @@
       <div class="row">
         <div><label class="f" for="copies">Copies</label><input type="number" id="copies" min="1" max="20" value="1"></div>
         <div><label class="f" for="color">Colour</label>
-          <select id="color"><option value="monochrome">Black and white</option><option value="color">Colour</option></select></div>
+          <select id="color"><option value="monochrome">Black &amp; white</option><option value="color">Colour</option></select></div>
       </div>
       <label class="check"><input type="checkbox" id="duplex"> Print on both sides</label>
       <button class="go" type="submit" id="sendGo">Send to the printer</button>
-      <p class="msg bad" id="sendMsg" hidden></p>
+      <p class="msg bad" id="sendMsg" role="alert" hidden></p>
       <p class="note" id="offline" hidden>The office computer is switched off right now. Your file waits safely and prints as soon as it's back on.</p>
       <p class="msg" style="color:var(--soft)"><span id="left"></span> <button type="button" class="link" id="notMe">Not you? Use another code</button></p>
     </form>

@@ -73,14 +73,14 @@
 </head>
 <body>
   <header class="no-print">
-    <span class="brand-mark" aria-label="PrintBridge">PRINTBRIDGE</span>
+    <span class="brand-mark" role="img" aria-label="PrintBridge">PRINTBRIDGE</span>
     <h1>Sign for the wall</h1>
     <div class="spacer"></div>
-    <button class="secondary" onclick="location.href='/'" type="button">Back to printing</button>
+    <a class="button secondary" href="/">Back to printing</a>
   </header>
 
   <div class="poster-controls">
-    <div id="pageMessage" class="page-message" hidden></div>
+    <div id="pageMessage" class="page-message" role="status" aria-live="polite" hidden></div>
     <p style="font-size:15px">
       Print this and stick it next to the printer. Anyone can point a phone
       camera at the code and start printing &mdash; nothing to install, no account.

@@ -51,6 +51,8 @@ function get(url, redirectsLeft) {
         response.resume();
         if (redirectsLeft <= 0) return reject(new Error("Too many redirects."));
         const next = new URL(response.headers.location, url).toString();
+        // Installed with admin rights: never let a redirect drop to plain http.
+        if (url.startsWith("https:") && !next.startsWith("https:")) return reject(new Error("The download site sent it to an insecure address."));
         return resolve(get(next, redirectsLeft - 1));
       }
       if (response.statusCode !== 200) {

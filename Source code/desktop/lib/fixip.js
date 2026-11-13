@@ -309,7 +309,9 @@ async function restore() {
   const rec = P.readRecord().fixedAddress;
   if (!rec) return { ok: true, message: "" };
   const info = await detect();
-  if (info.found && info.address !== rec.address) {
+  // Changed only if it is the same connection with another address; another
+  // connection being in use (Wi-Fi with the cable out) says nothing about it.
+  if (info.found && info.adapter === rec.adapter && info.address !== rec.address) {
     P.updateRecord({ fixedAddress: null });
     return { ok: true, message: "The network address was changed by someone since, so it was left as it is." };
   }

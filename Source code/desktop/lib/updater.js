@@ -314,7 +314,9 @@ async function busyReason() {
     if (busy && busy.printing > 0) return busy.printing + " print job(s) on their way to a printer";
   }
   const agent = durable.readJson(path.join(P.PRINTER_DIR, "status.json"));
-  if (agent && agent.busy > 0 && recent(agent.busyAt || agent.updatedAt)) return "printing on this computer";
+  // 20 minutes: a single print may run up to 15 (the SumatraPDF limit) without a fresh status.
+  const since = agent && (agent.busyAt || agent.updatedAt);
+  if (agent && agent.busy > 0 && since && Date.now() - since < 20 * 60 * 1000) return "printing on this computer";
   try {
     for (const n of fs.readdirSync(P.OUTBOX_DIR)) {
       if (/^taken-\d+\.pdf$/.test(n) && recent(fs.statSync(path.join(P.OUTBOX_DIR, n)).mtimeMs)) {
@@ -434,12 +436,14 @@ async function launchRunner(plan) {
   durable.writeJson(APPLY(), plan);
 
   if (P.IS_WINDOWS && P.IS_PACKAGED) {
-    const file = path.join(os.tmpdir(), "office-printing-update-task-" + process.pid + ".xml");
+    // In the update folder (admins and SYSTEM only), never the shared temp folder.
+    const file = path.join(dir, "update-task.xml");
     fs.writeFileSync(file, Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from(runnerTaskXml(runner, dir), "utf16le")]));
     const made = await run(SCHTASKS(), ["/Create", "/TN", UPDATE_TASK, "/XML", file, "/F"]);
     try { fs.rmSync(file, { force: true }); } catch (err) { /* temp */ }
-    const started = made.ok && (await run(SCHTASKS(), ["/Run", "/TN", UPDATE_TASK])).ok;
-    if (!started) log.line("Couldn't start the update task: " + made.out.trim());
+    const ran = made.ok ? await run(SCHTASKS(), ["/Run", "/TN", UPDATE_TASK]) : made;
+    const started = made.ok && ran.ok;
+    if (!started) log.line("Couldn't start the update task: " + ran.out.trim());
     return started;
   }
   if (P.IS_MAC && P.IS_PACKAGED) {
@@ -583,7 +587,7 @@ async function check(reason) {
     const spreadMs = num("OP_UPDATE_SPREAD_MS", Math.max(0, Number(manifest.spreadMinutes == null ? 30 : manifest.spreadMinutes)) * 60 * 1000);
     const turnAt = state.seenAt + Math.floor(computerSlot() * spreadMs);
     if (Date.now() < turnAt) {
-      say("waiting-turn");
+      say("waiting-turn", { spreadMinutes: Math.max(1, Math.round(spreadMs / 60000)) });
       return turnAt - Date.now() + 1000;
     }
   }
@@ -616,7 +620,7 @@ async function check(reason) {
     startedAt: Date.now(),
   };
   log.line("Installing version " + manifest.version + " (this is " + VERSION + ")" + (busy ? " - waited two hours for printing to stop" : "") + ".");
-  say("installing", { waitingFor: "" });
+  say("installing", { waitingFor: "", readyAt: 0 }); // a later retry waits for quiet again
   let started = false;
   try {
     started = await launchRunner(plan);
@@ -713,7 +717,7 @@ function updateNowOutcome(state, askedAt) {
     case "downloading": return { done: true, text: "A new version" + v + " was found and is being downloaded now." + by };
     case "waiting-quiet": return { done: true, text: "A new version" + v + " is ready. It will install as soon as nothing is printing" + (s.waitingFor ? " (" + s.waitingFor + ")" : "") + "." + by };
     case "installing": return { done: true, text: "A new version" + v + " is being installed now. " + name + " restarts by itself in a minute or two." };
-    case "waiting-turn": return { done: true, text: "A new version" + v + " was found. Every computer takes its turn within half an hour, so this one will start shortly." + by };
+    case "waiting-turn": return { done: true, text: "A new version" + v + " was found. Every computer takes its turn within " + spreadText(s.spreadMinutes) + ", so this one will start shortly." + by };
     case "paused": return { done: true, text: "A new version" + v + " is published but on hold for now, so it isn't being installed. This computer stays on version " + VERSION + "." };
     case "manual": return { done: true, text: "A new version" + v + " can't be installed by itself from version " + VERSION + ". Download it from the " + name + " download page and run it." };
     case "failed": case "gave-up": case "retry-later": return { done: true, text: "A new version" + v + " was found, but installing it didn't work here.\n\nRun " + name + " Setup again from the download page, or ask whoever looks after the computers." };
@@ -758,6 +762,12 @@ function installCommand(plan) {
 }
 
 // Puts the previous program back and starts it again.
+// "half an hour" for the usual 30 minutes, otherwise the number.
+function spreadText(minutes) {
+  const m = minutes || 30;
+  return m === 30 ? "half an hour" : m === 60 ? "an hour" : m + " minutes";
+}
+
 async function restorePrevious(plan, backup) {
   const target = plan.installedBinary;
   if (!target || !fs.existsSync(backup)) {
@@ -766,8 +776,9 @@ async function restorePrevious(plan, backup) {
   if (plan.platform === "windows" && P.IS_WINDOWS) {
     await run(SCHTASKS(), ["/End", "/TN", P.TASK_NAME]);
     await run("taskkill.exe", ["/F", "/IM", path.basename(target)]);
-    for (let i = 0; i < 10; i++) {
-      try { fs.copyFileSync(backup, target); break; } catch (err) {
+    let copied = false;
+    for (let i = 0; i < 10 && !copied; i++) {
+      try { fs.copyFileSync(backup, target); copied = true; } catch (err) {
         await run("taskkill.exe", ["/F", "/IM", path.basename(target)]);
         await wait(2000);
       }
@@ -777,20 +788,24 @@ async function restorePrevious(plan, backup) {
     await run(target, ["install-service"], 120000);
     await run(SCHTASKS(), ["/Run", "/TN", P.TASK_NAME]);
     await run(target, ["start-signed-in"], 120000);
-    return;
+    if (!copied) log.line("Couldn't put the previous program back: it stayed locked.");
+    return copied;
   }
   if (plan.platform === "mac" && P.IS_MAC) {
     await run("/bin/launchctl", ["bootout", "system/" + SERVICE_LABEL]);
-    try { fs.copyFileSync(backup, target); fs.chmodSync(target, 0o755); } catch (err) { log.line("Couldn't put the previous program back: " + err.message); }
+    let copied = false;
+    try { fs.copyFileSync(backup, target); fs.chmodSync(target, 0o755); copied = true; } catch (err) { log.line("Couldn't put the previous program back: " + err.message); }
     if (fs.existsSync(SERVICE_PLIST)) await run("/bin/launchctl", ["bootstrap", "system", SERVICE_PLIST]);
-    return;
+    return copied;
   }
   // Tests: put the file back, then whatever restarts the stand-in.
-  try { if (target && fs.existsSync(backup)) fs.copyFileSync(backup, target); } catch (err) { log.line("Couldn't put the previous program back: " + err.message); }
+  let copied = false;
+  try { if (target && fs.existsSync(backup)) { fs.copyFileSync(backup, target); copied = true; } } catch (err) { log.line("Couldn't put the previous program back: " + err.message); }
   if (process.env.OP_UPDATE_RESTART_CMD) {
     const parts = JSON.parse(process.env.OP_UPDATE_RESTART_CMD);
     await run(parts[0], parts.slice(1));
   }
+  return copied;
 }
 
 async function applyUpdate() {
@@ -812,7 +827,7 @@ async function applyUpdate() {
   }
 
   const backup = path.join(dir, "previous.bin");
-  const finish = (ok, message) => {
+  const finish = (ok, message, keepBackup) => {
     const result = readResult();
     const failures = ok ? null : {
       version: plan.version,
@@ -823,7 +838,8 @@ async function applyUpdate() {
     log.line((ok ? "Updated to " : "Didn't update to ") + plan.version + ": " + message);
     try { durable.removeJson(APPLY()); } catch (err) { /* fine */ }
     if (ok) { try { fs.rmSync(plan.file, { force: true }); } catch (err) { /* tidied later */ } }
-    try { fs.rmSync(backup, { force: true }); } catch (err) { /* tidied later */ }
+    // Kept when it couldn't be put back: it is the only copy of the version that worked.
+    if (!keepBackup) { try { fs.rmSync(backup, { force: true }); } catch (err) { /* tidied later */ } }
     try { fs.rmSync(lockFile, { force: true }); } catch (err) { /* fine */ }
     if (P.IS_MAC && P.IS_PACKAGED) { try { fs.rmSync(UPDATE_PLIST, { force: true }); } catch (err) { /* tidied later */ } }
   };
@@ -867,10 +883,12 @@ async function applyUpdate() {
     plan.stage = "restoring";
     durable.writeJson(APPLY(), plan);
     const restoredAt = Date.now();
-    await restorePrevious(plan, backup);
+    const copied = await restorePrevious(plan, backup);
     const back = await waitHealthy(plan.from, restoredAt, healthyMs);
     return finish(false, "The update failed (" + why + "). " +
-      (back ? "Version " + plan.from + " was put back and is running." : "Version " + plan.from + " was put back but hasn't reported in yet."));
+      (back ? "Version " + plan.from + " was put back and is running."
+        : copied ? "Version " + plan.from + " was put back but hasn't reported in yet."
+        : "Version " + plan.from + " couldn't be put back; its copy is kept in the update folder."), !copied);
   } catch (err) {
     return finish(false, "The update stopped with a problem: " + (err && err.message ? err.message : err));
   }
@@ -898,6 +916,7 @@ function report() {
 }
 
 module.exports = {
+  spreadText,
   start, applyUpdate, isInstalling, report, compareVersions, signatureMatches, fetchManifest, updateDir, updateNowOutcome, readState,
   UPDATE_TASK, UPDATE_LABEL, UPDATE_PLIST,
 };

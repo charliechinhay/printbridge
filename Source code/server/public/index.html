@@ -13,10 +13,8 @@
 </head>
 <body>
   <div id="langPick" class="lang-pick"></div>
-  <div id="alertBanners" class="alert-banners"></div>
-
   <header class="one-line">
-    <span class="brand-mark notranslate" translate="no" aria-label="PrintBridge">PRINTBRIDGE</span>
+    <span class="brand-mark notranslate" translate="no" role="img" aria-label="PrintBridge">PRINTBRIDGE</span>
     <h1>Print</h1>
     <div class="spacer"></div>
     <button class="name-chip" id="nameChip" type="button" title="Change your name"></button>
@@ -26,9 +24,10 @@
     </button>
     <button class="help-btn" id="helpBtn" type="button"><span class="help-long">Need help?</span><span class="help-short">Help</span></button>
   </header>
+  <div id="alertBanners" class="alert-banners"></div>
 
   <main>
-    <div id="pageMessage" class="page-message" hidden></div>
+    <div id="pageMessage" class="page-message" role="status" aria-live="polite" hidden></div>
 
     <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="Choose files to print">
       <div class="dropzone-icon" aria-hidden="true">
@@ -60,12 +59,12 @@
 
     <div class="card" id="queueCard">
       <h2>Printing now <span class="h2-note">&mdash; everyone</span></h2>
-      <table id="queueTable">
+      <div class="table-scroll"><table id="queueTable">
         <thead>
           <tr><th>#</th><th>Who</th><th>Printer</th><th>Status</th><th></th></tr>
         </thead>
         <tbody></tbody>
-      </table>
+      </table></div>
       <div class="hint" id="queueHint">Nothing printing right now.</div>
     </div>
 
@@ -127,17 +126,17 @@
             </div>
             <div class="field">
               <label id="orientationLabel">Orientation</label>
-              <div class="seg" id="segOrientation" role="radiogroup" aria-labelledby="orientationLabel">
-                <button type="button" data-value="auto" role="radio">Automatic</button>
-                <button type="button" data-value="portrait" role="radio">Portrait</button>
-                <button type="button" data-value="landscape" role="radio">Landscape</button>
+              <div class="seg" id="segOrientation" role="group" aria-labelledby="orientationLabel">
+                <button type="button" data-value="auto">Automatic</button>
+                <button type="button" data-value="portrait">Portrait</button>
+                <button type="button" data-value="landscape">Landscape</button>
               </div>
             </div>
             <div class="field">
               <label id="scalingLabel">Size on paper</label>
-              <div class="seg" id="segScaling" role="radiogroup" aria-labelledby="scalingLabel">
-                <button type="button" data-value="fit" role="radio">Fit to page</button>
-                <button type="button" data-value="actual" role="radio">Actual size</button>
+              <div class="seg" id="segScaling" role="group" aria-labelledby="scalingLabel">
+                <button type="button" data-value="fit">Fit to page</button>
+                <button type="button" data-value="actual">Actual size</button>
               </div>
             </div>
           </div>
@@ -149,7 +148,7 @@
       <div class="modal-foot">
         <button class="big-print" id="printButton" type="button">Print</button>
       </div>
-      <div id="printMessage" class="modal-message"></div>
+      <div id="printMessage" class="modal-message" role="status" aria-live="polite"></div>
     </div>
   </div>
 
@@ -205,7 +204,7 @@
       <div class="modal-foot">
         <button class="big-print" id="sendHelp" type="button">Send</button>
       </div>
-      <div id="helpFormMessage" class="modal-message"></div>
+      <div id="helpFormMessage" class="modal-message" role="status" aria-live="polite"></div>
     </div>
   </div>
 

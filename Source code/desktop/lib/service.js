@@ -95,11 +95,13 @@ async function exists() {
 // Adds (or replaces) the task. Needs administrator rights (Setup has them).
 async function install() {
   if (!P.IS_WINDOWS) return { ok: false, message: "The startup task is only for Windows." };
-  const file = path.join(os.tmpdir(), "office-printing-task-" + process.pid + ".xml");
+  // A new folder with a random name: nobody else can have planted the file.
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "office-printing-"));
+  const file = path.join(tmpDir, "task.xml");
   // Task Scheduler reads the file as UTF-16 (any folder name survives).
-  fs.writeFileSync(file, Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from(taskXml(process.execPath), "utf16le")]));
+  fs.writeFileSync(file, Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from(taskXml(process.execPath), "utf16le")]), { flag: "wx" });
   const r = await run(SCHTASKS, ["/Create", "/TN", P.TASK_NAME, "/XML", file, "/F"]);
-  try { fs.rmSync(file, { force: true }); } catch (err) { /* temp folder */ }
+  try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch (err) { /* temp folder */ }
   const ok = r.ok && (await exists());
   if (ok) P.updateRecord({ startupTask: true });
   return ok
@@ -179,10 +181,11 @@ async function startForSignedInUsers(exePath) {
   </Actions>
 </Task>
 `;
-    const file = path.join(os.tmpdir(), "office-printing-start-" + process.pid + "-" + i + ".xml");
-    fs.writeFileSync(file, Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from(xml, "utf16le")]));
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "office-printing-"));
+    const file = path.join(tmpDir, "start.xml");
+    fs.writeFileSync(file, Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from(xml, "utf16le")]), { flag: "wx" });
     const made = await run(SCHTASKS, ["/Create", "/TN", name, "/XML", file, "/F"]);
-    try { fs.rmSync(file, { force: true }); } catch (err) { /* temp folder */ }
+    try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch (err) { /* temp folder */ }
     if (made.ok && (await run(SCHTASKS, ["/Run", "/TN", name])).ok) started++;
   }
   return started;

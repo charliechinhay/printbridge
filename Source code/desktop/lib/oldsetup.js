@@ -113,6 +113,8 @@ function folderOf(file) {
 
 function isOldServerDir(dir) {
   if (!exists(path.join(dir, "server.js"))) return false;
+  // A copy of today's source code (it has desktop/ beside server/) is never the old version.
+  if (exists(path.join(dir, "..", "desktop", "main.js"))) return false;
   try {
     return JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8")).name === "print-platform-server";
   } catch (err) {
